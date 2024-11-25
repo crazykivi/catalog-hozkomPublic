@@ -17,11 +17,11 @@ if ($mysqli->connect_errno) {
 $query = $mysqli->prepare('SELECT codeArticle, nameArticle, CategoryArticle, priceArticle FROM article WHERE codeArticle = ? AND availabilityArticle="true" ORDER BY nameArticle DESC');
 
 if (!$query) {
-    echo json_encode(["error" => $mysqli->error]); // Выводим ошибку
+    echo json_encode(["error" => $mysqli->error]);
     exit();
 }
 
-$query->bind_param('i', $code); // Передаём $code как параметр (тип - integer)
+$query->bind_param('i', $code);
 $query->execute();
 
 $result = $query->get_result();

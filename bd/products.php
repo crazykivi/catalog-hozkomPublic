@@ -33,13 +33,12 @@ foreach ($searchWords as $word) {
 }
 
 $searchQuery = implode(' AND ', $searchConditions);
-$allowedSortFields = ['nameArticle', 'priceArticle']; // Разрешенные поля для сортировки
-$allowedSortOrders = ['asc', 'desc']; // Разрешенные направления сортировки
+$allowedSortFields = ['nameArticle', 'priceArticle'];
+$allowedSortOrders = ['asc', 'desc'];
 $sortField = isset($_GET['sortField']) ? $_GET['sortField'] : 'nameArticle';
 $sortOrder = isset($_GET['sortOrder']) ? $_GET['sortOrder'] : 'asc';
 $profitably = isset($_GET['profitably']) ? $mysqli->real_escape_string($_GET['profitably']) : '0';
 
-// Проверяем, являются ли переданные значения допустимыми
 $sortField = in_array($sortField, $allowedSortFields) ? $sortField : 'nameArticle';
 $sortOrder = in_array($sortOrder, $allowedSortOrders) ? $sortOrder : 'asc';
 
@@ -64,13 +63,12 @@ if ($categoryArticle) {
     ORDER BY $sortField $sortOrder";
 }
 
-// Отладка: выводим запрос SQL
-error_log($query); // Логируем запрос для отладки
+error_log($query);
 
 $result = $mysqli->query($query);
 
 if (!$result) {
-    echo json_encode(["error" => $mysqli->error]); // Выводим ошибку SQL
+    echo json_encode(["error" => $mysqli->error]);
     exit();
 }
 
