@@ -2362,9 +2362,7 @@
             const loadingIndicator = document.getElementById("loading-spinner");
             loadingIndicator.style.display = "flex";
 
-            fetch("http://31.128.36.243:3003/send-email2", {
-                //fetch('http://192.168.0.135:3000/send-email', {
-                //fetch('http://192.168.20.164:3003/send-email2', {
+            fetch("http://192.168.0.135/send-email2", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -2389,7 +2387,6 @@
 
                         const clearOrderCheckbox = document.getElementById("clearOrderCheckbox");
                         if (clearOrderCheckbox.checked) {
-                            // Если чекбокс установлен, очищаем таблицы
                             clearTables();
                         }
                     } else {
@@ -2424,92 +2421,16 @@
             saveOrderTemp();
         }
 
-        /*
-        //функция экспорта в файл excel
-        function exportToExcel() {
-            if (!workbook) {
-                                alert("Файл шаблона не найден.");
-                            return;
-            }
-
-                            const today = new Date();
-                            const day = String(today.getDate()).padStart(2, '0');
-                            const month = String(today.getMonth() + 1).padStart(2, '0');
-                            const year = today.getFullYear();
-                            const formattedDate = `${day}.${month}.${year}`;
-
-                            const ws = workbook.Sheets[workbook.SheetNames[0]];
-
-                            XLSX.utils.sheet_add_aoa(ws, [['Заявка на продажу товара от ' + formattedDate]], {origin: 'A1' });
-
-                            const managerEmail = document.getElementById('managerSelect').value;
-                            XLSX.utils.sheet_add_aoa(ws, [[managerEmail]], {origin: 'C6' });
-
-                            const customerName = document.getElementById('customerName').value;
-                            XLSX.utils.sheet_add_aoa(ws, [[customerName]], {origin: 'C8' });
-
-                            const customerPhone = document.getElementById('customerPhone').value;
-                            XLSX.utils.sheet_add_aoa(ws, [[customerPhone]], {origin: 'C9' });
-
-                            const customerEmail = document.getElementById('customerEmail').value;
-                            XLSX.utils.sheet_add_aoa(ws, [[customerEmail]], {origin: 'C10' });
-
-                            let totalPrice = document.getElementById('totalPrice').textContent;
-                            totalPrice = totalPrice.replace('.', ',');
-                            XLSX.utils.sheet_add_aoa(ws, [[totalPrice]], {origin: 'C12' });
-
-                            const discount = document.getElementById('discount').value;
-                            XLSX.utils.sheet_add_aoa(ws, [[discount]], {origin: 'C13' });
-
-                            let totalPriceDiscount = document.getElementById('totalPriceDiscount').textContent;
-                            totalPriceDiscount = totalPriceDiscount.replace('.', ',');
-                            XLSX.utils.sheet_add_aoa(ws, [[totalPriceDiscount]], {origin: 'C14' });
-
-                            const orderTableRows = document.querySelectorAll('#orderTable tbody tr');
-                            const tableData = [['№', 'Код', 'Товар', 'Цена за ед.', '', '', 'Кол-во', 'Сумма']];
-        
-            orderTableRows.forEach((row, index) => {
-                const cells = row.getElementsByTagName('td');
-                            const code = cells[1].innerText;
-                            const name = cells[2].innerText;
-                            const price = cells[3].innerText.replace('.', ',');
-                            const quantity = cells[4].querySelector('input').value;
-                            const sum = cells[5].innerText.replace('.', ',');
-
-                            tableData.push([
-                            index + 1,
-                            code,
-                            name,
-                            price,
-                            '',
-                            '',
-                            quantity,
-                            sum
-                            ]);
-            });
-                            XLSX.utils.sheet_add_aoa(ws, tableData, {origin: 'A16' });
-
-                            XLSX.writeFile(workbook, `zayavka_${formattedDate}.xlsx`);
-        }
-                            */
-
         document.addEventListener("DOMContentLoaded", function () {
-            loadCategories(); // Вызываем один раз при загрузке страницы
+            loadCategories();
 
-            // Получаем ссылку на чекбокс
             const fixProfitablyCheckbox = document.getElementById("fix-profitably-checkbox");
 
-            // Проверяем, существует ли элемент чекбокса
             if (fixProfitablyCheckbox) {
-                //console.log("Чекбокс найден");
-
-                // Добавляем обработчик для события изменения состояния чекбокса
                 fixProfitablyCheckbox.addEventListener("change", function () {
                     //console.log("Состояние чекбокса изменилось");
-                    loadCategories(); // Вызываем loadCategories только при изменении состояния чекбокса
+                    loadCategories();
                 });
-            } else {
-                //console.log("Чекбокс не найден");
             }
         });
 
