@@ -1,0 +1,3288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, shrink-to-fit=no, maximum-scale=1.0, user-scalable=no">
+    <title>Страница заказа</title>
+    <link rel="stylesheet" href="css/main.css?v=1.0">
+    <link rel="icon" type="image/x-icon"
+        href="https://f2.lpcdn.site/afd68db6cd59d273c3fb1c7c54e01381/ea788098236fbd09c1cdce8bf8be5b00.png">
+    <!-- Библиотека jquery и ajax-->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <div id="alertContainer">
+        Сервис работает в тестовом режиме, возможны ошибки. Если вы встретились с проблемами, просьба сообщить
+        администратору: admin@hozkom.ru<br><br>
+        <u>При оформлении заявки просьба нажимать "Отправить заказ" один раз и дождаться результата работы скрипта.
+            Спасибо за понимание!</u>
+        <button onclick="closeAlert()">Закрыть</button>
+    </div>
+    <div id="cookieConsentOverlay" class="hidden">
+        <div id="cookieConsent">
+            <button class="cookie-button" onclick="acceptCookies()">Разрешить сохранять данные заявки?</button>
+        </div>
+    </div>
+
+    <div class="photo">
+        <img id="productImage" style="display: none; position: absolute;">
+    </div>
+    <div class="main-section">
+        <div class="div-header">
+            <div id="category-container" style="position: relative;">
+                <div class="tooltip-container">
+                    <button class="save-order-button" style="margin-right: 0;" onclick="showFAQ()"><img class="color"
+                            src="img/help.png"></button>
+                    <span class="tooltip-text">Помощь</span>
+                </div>
+                <h4 style="margin-right: -40px;">Скидка (%):</h4>
+                <div class="tooltip-container" style="position: relative; margin-left:45px;">
+                    <input type="number" class="discount" id="discount" value="0" min="0" max="100"
+                        onchange="updateTotalPrice()">
+                    <span class="tooltip-text discount-tooltip">Скидка покупателя, используемая для предварительного
+                        расчета цен на
+                        товары в заявке
+
+                        Разовые (текущая заявка)
+                        5 000руб. – 2%
+                        10 000руб. – 3%
+                        15 000руб. – 4%
+                        30 000руб. – 5%
+                        45 000руб. – 6%
+                        150 000руб. – 7%
+                        300 000руб. – 8%
+                        400 000руб. – 9%
+                        800 000руб. – 10%
+
+                        Накопительные (покупки в предыдущем месяце)
+                        20 000руб. – 3%
+                        40 000руб. – 4%
+                        60 000руб. – 5%
+                        90 000руб. – 6%
+                        250 000руб. – 7%
+                        500 000руб. – 8%
+                        800 000руб. – 9%
+                        1 000 000руб. – 10%
+                    </span>
+                </div>
+                <input type="checkbox" id="fix-profitably-checkbox">
+                <h4>Выгодно</h4>
+                <div class="tooltip-container" style="display: flex; align-items: center;">
+                    <input type="checkbox" id="fix-category-checkbox">
+                    <span class="tooltip-text">Фиксировать категорию</span>
+                </div>
+                <h4>Выбор категории</h4>
+                <input class="input-field" id="category-input" value="../" readonly onclick="toggleDropdown()"
+                    style="cursor: pointer; width:100%">
+                <div class="tooltip-container">
+                    <button onclick="goBack()" class="back-button">←</button>
+                    <span class="tooltip-text">Переход выше на категорию</span>
+                </div>
+                <div id="dropdown">
+                </div>
+            </div>
+            <div class="search-container">
+                <div class="tooltip-container" id="tooltipSetting">
+                    <div class="toggle-button" onclick="toggleButtonContainer()">
+                        <img id="setting" class="color" src="img/setting.png">
+                    </div>
+                    <span class="tooltip-text">Настройки</span>
+                </div>
+                <input type="text" id="searchInput" class="input-field" list="searchHistory"
+                    placeholder="Введите слова поиска через пробел в любой последовательности…">
+                <datalist id="searchHistory">
+                </datalist>
+                <div class="tooltip-container" style="display: none;">
+                    <div class="history-button" onclick="toggleHistory()"><img class="color" src="img/icon-history.png">
+                    </div>
+                    <span class="tooltip-text">Список ранее введенных поисковых слов</span>
+                </div>
+                <button class="search-button search" onclick="loadData()">Поиск</button>
+                <div id="historyList" class="history-list" style="display: none;">
+                    <ul id="historyItems"></ul>
+                    <!-- <button id="clearHistory" class="clear-button">Очистить историю</button> -->
+                </div>
+            </div>
+
+            <div class="button-container" id="buttonContainer">
+                <label>
+                    <input type="radio" name="searchType" value="all" id="searchAll" checked> Поиск везде
+                </label>
+                <label>
+                    <input type="radio" name="searchType" value="code" id="searchCode"> Поиск по коду
+                </label>
+                <label>
+                    <input type="radio" name="searchType" value="name" id="searchName"> Поиск по названию
+                </label>
+            </div>
+            <div class="button-container second" id="buttonContainerSecond">
+                <label>
+                    <input type="checkbox" name="searchType" value="all" id="noimgLeft"> Без картинок
+                </label>
+                <select name="imgsize" size="1" id="imgsizeLeft">
+                    <option value="small">Маленькие картинки</option>
+                    <option value="medium">Средние картинки</option>
+                    <option value="big">Большие картинки</option>
+                </select>
+                <label>
+                    <input type="checkbox" name="searchType" value="all" id="syncLeft" checked> Синхронизация
+                </label>
+            </div>
+        </div>
+        <div class="scroll-container">
+            <div class="table-container" id="productTableContainer">
+                <table class="table" id="productTable">
+                    <thead>
+                        <tr>
+                            <th class="code-header" style="text-align: center;">Код</th>
+                            <th style="text-align: center;" class="img-header">Фото</th>
+                            <th class="name-header" style="text-align: center;" onclick="sortTable('name')">
+                                Наименование товара
+                                <span id="product-count"></span>
+                                <span class="sort-indicator" id="name-sort-indicator">▲▼</span>
+                            </th>
+                            <th class="quantity-header" style="text-align: center;">Кол-во шт.</th>
+                            <th class="price-header" style="text-align: center; min-width: 60px;"
+                                onclick="sortTable('price')">
+                                Цена
+                                <span class="sort-indicator" id="price-sort-indicator">▲▼</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="chose-section">
+        <button id="expandButton" onclick="toggleHeaders()"><span>◄</span></button>
+    </div>
+    <div class="selected-items-section">
+        <h3>Список выбранных товаров</h3>
+        <div class="button-container right" id="buttonContainerRight" style="display:none;">
+            <label>
+                <input type="checkbox" name="searchType" value="all" id="noimgRight"> Без картинок
+            </label>
+            <select name="imgsize" size="1" id="imgsizeRight">
+                <option value="small">Маленькие картинки</option>
+                <option value="medium">Средние картинки</option>
+                <option value="big">Большие картинки</option>
+            </select>
+            <label>
+                <input type="checkbox" name="searchType" value="all" id="syncRight" checked> Синхронизация
+            </label>
+            <a class="ClearRigthTable" id="ClearRigthTable">Отчистить список выбранных товаров</a>
+        </div>
+        <div class="scroll-container">
+            <div class="table-container">
+                <table class="table" id="orderTable">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-header" style="display: none;"><a
+                                    onclick="selectAll('orderTable')"><input class="read-only" type="checkbox"
+                                        checked="checked" /></a> / <a onclick="deselectAll('orderTable')"><input
+                                        class="read-only" type="checkbox" /></a>
+                            </th>
+                            <th class="code-header" style="text-align: center;">Код</th>
+                            <th class="img-header" style="text-align: center;">Фото</th>
+                            <th class="name-header header" id="name-header" style="text-align: center;">Наименование
+                                товара <span id="product-count-right"></span></th>
+                            <th class="price-header header" id="price-header" style="text-align: center;">Цена</th>
+                            <th class="quantity-header" style="text-align: center;">Кол-во шт.</th>
+                            <th class="price-header" style="text-align: center;">Сумма</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="price-container">
+        <div class="price-field">Итого: <span id="totalPrice">0.00</span> ₽</div>
+        <div class="price-and-order">
+            <div class="tooltip-container">
+                <span class="tooltip-text">Открывает форму оформления заявки</span>
+                <button class="order-button" id="order-button" onclick="showOrderForm()">Оформить заявку</button>
+            </div>
+            <div class="tooltip-container" style="display: none;">
+                <button class="save-pdf-button-another" id="printButton"><img class="color" src="img/pdf.png"></button>
+                <span class="tooltip-text">Сохраняет заявку на приобретение товара в формате PDF, в стандартной папке
+                    «Загрузки»</span>
+            </div>
+            <div class="tooltip-container">
+                <button class="view-button-another" id="saveOrderLocal"><img class="color" src="img/save.png"></button>
+                <span class="tooltip-text">Сохранение заказа</span>
+            </div>
+            <div class="tooltip-container">
+                <button class="view-button-another" id="OpenOrderLocal">
+                    <img class="color" src="img/open.png">
+                </button>
+                <span class="tooltip-text">Открытие заказа из файла</span>
+                <input type="file" id="fileInput" accept=".json" style="display: none;">
+            </div>
+            <div class="tooltip-container">
+                <button class="view-button-another" id="viewButton"><img class="color" src="img/viewing.png"></button>
+                <span class="tooltip-text">Просмотр списка заявки на приобретение товара</span>
+            </div>
+            <div class="tooltip-container" style="display: none;">
+                <button class="save-order-button" onclick="saveOrder()"><img class="color" src="img/save.png"></button>
+                <span class="tooltip-text">Сохраняет файл заявки на товар в стандартной папке «Загрузки»</span>
+            </div>
+            <input type="file" id="orderFileInput" onchange="loadOrder(event)">
+        </div>
+    </div>
+
+    <div id="orderFormContainer">
+        <div class="header">
+            <h3>Оформление заявки</h3>
+            <button class="close-button" onclick="confirmCloseOrderForm()">&times;</button>
+        </div>
+
+        <div class="form-body">
+            <label for="customerName">Название компании покупателя</label>
+            <input type="text" id="customerName">
+            <span id="nameError" class="error"></span><br>
+
+            <label for="customerPhone">Телефон</label>
+            <input type="text" id="customerPhone" title="Введите телефон в формате, который указан ниже">
+            <span id="phoneError" class="error"></span><br>
+
+            <label for="customerEmail">Почта клиента</label>
+            <input type="email" id="customerEmail">
+            <span id="emailError" class="error"></span><br>
+
+            <label for="managerSelect">Выбор менеджера</label>
+            <select id="managerSelect">
+            </select><br><br>
+
+            <label for="comments">Комментарий</label>
+            <textarea id="AnyComments" rows="4" cols="50"
+                style="max-width: 100%; min-width: 100%; max-height: 5em; min-height: 5em; font-size: 16px;"></textarea>
+            <br><br>
+            <div id="orderListContainer">
+                <textarea id="orderList" readonly></textarea>
+            </div>
+        </div>
+        <div class="CheckOrder" style="margin-top:-20px;">
+            <input style="width: 30px; font-size: 2em;" type="checkbox" id="clearOrderCheckbox" class="CheckOrder">
+            <label style="margin-left: 10px;">Очищать список заявки после отправки</label>
+        </div>
+        <div class="footer">
+            <div class="tooltip-container">
+                <button class="view-button" id="viewButton2"><img class="color" src="img/viewing.png"></button>
+                <span class="tooltip-text">Просмотр списка заявки на приобретение товара</span>
+            </div>
+            <div class="tooltip-container" style="display: none;">
+                <button class="save-pdf-button" id="printButton2"><img class="color" src="img/pdf.png"></button>
+                <span class="tooltip-text">Сохраняет заявку на приобретение товара в формате PDF, в стандартной папке
+                    «Загрузки»</span>
+            </div>
+            <button class="submitOrder" onclick="submitOrder()">Отправить заказ</button>
+        </div>
+    </div>
+
+    <div id="loading-spinner" class="spinner-overlay">
+        <div class="spinner"></div>
+        <img class="spinner-img" src="img/default.png">
+    </div>
+
+    <div id="overlay">
+    </div>
+    <div id="search-panel" class="search-panel" onclick="toggleHeaders()">Открыть поиск товаров</div>
+    <div id="TotalPriceWhithoutDiscount" style="display: none;"></div>
+    <table id="hiddenTable" style="display:none;">
+        <tbody></tbody>
+    </table>
+    <div id="faqPopupContainer">
+        <div class="header-faq">
+            <h3>Помощь</h3>
+            <button class="close-button" onclick="closeFAQ()">&times;</button>
+        </div>
+        <div class="form-body">
+            <ul>
+                <li><a href="https://vk.com/video-227190975_456239025" target="_blank">Интерфейс страницы заказа</a>
+                </li>
+                <li><a href="https://vk.com/video-227190975_456239025" target="_blank">Оформление заказа</a></li>
+                <li><a href="https://vk.com/video-227190975_456239026" target="_blank">Поиск</a></li>
+                <li><a href="https://vk.com/video-227190975_456239027" target="_blank">Скидка</a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="overlay-faq" class="overlay-faq" onclick="closeFAQ()"></div>
+    <input type="hidden" id="hiddenAnyManagerEmail" value="">
+    <span id="loading-text"></span>
+
+    <script src="https://unpkg.com/clusterize.js"></script>
+    <script>
+        let currentItems = {};
+        window.onload = function () {
+            // Показ алерта при загрузке страницы
+            //showAlert();
+        };
+
+        function showAlert() {
+            document.getElementById("alertContainer").style.display = "block";
+        }
+
+        function closeAlert() {
+            document.getElementById("alertContainer").style.display = "none";
+        }
+
+        //Это скрипт для работы enter в строке поиска
+        document.addEventListener("DOMContentLoaded", function () {
+            loadUserSettings();
+            validateInputs();
+            const imgHeaders = document.querySelectorAll(".img-header");
+            imgHeaders.forEach((headimg) => {
+                headimg.style.width = "60px";
+                headimg.style.maxWidth = "60px";
+            });
+
+            const searchInput = document.getElementById("searchInput");
+
+            searchInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    loadData();
+                }
+            });
+        });
+
+        function createDialog(row, productCode, onConfirm, onCancel) {
+            if (document.querySelector(".dialog")) {
+                return; // Если диалог уже существует, выходим из функции
+            }
+
+            // Сохраняем текущий фокус
+            const previousFocus = document.activeElement;
+
+            const overlay = document.createElement("div");
+            overlay.classList.add("overlay");
+
+            const dialog = document.createElement("div");
+            dialog.classList.add("dialog");
+            dialog.style.position = "fixed";
+            dialog.style.top = "50%";
+            dialog.style.left = "50%";
+            dialog.style.transform = "translate(-50%, -50%)";
+            dialog.style.backgroundColor = "white";
+            dialog.style.border = "1px solid black";
+            dialog.style.padding = "20px";
+            dialog.style.zIndex = "1000"; // Диалог поверх overlay
+            dialog.innerHTML = `<p>Вы хотите удалить товар из корзины?</p>
+                <button id="confirmDelete">Да</button>
+                <button id="cancelDelete">Нет</button>`;
+
+            document.body.appendChild(overlay);
+            document.body.appendChild(dialog);
+
+            // Ставим фокус на кнопку подтверждения
+            const confirmButton = dialog.querySelector("#confirmDelete");
+            confirmButton.focus();
+
+            confirmButton.addEventListener("click", () => {
+                onConfirm();
+                removeDialog(overlay, dialog);
+                restoreFocus(previousFocus);
+            });
+
+            const cancelButton = dialog.querySelector("#cancelDelete");
+            cancelButton.addEventListener("click", () => {
+                onCancel();
+                removeDialog(overlay, dialog);
+                restoreFocus(previousFocus);
+            });
+
+            // Убираем фокус с текущего элемента
+            if (previousFocus) {
+                previousFocus.blur();
+            }
+
+            // Добавляем обработчик для взаимодействия с диалогом через клавиатуру
+            document.addEventListener("keydown", handleDialogKeydown);
+
+            function removeDialog(overlay, dialog) {
+                if (dialog && document.body.contains(dialog)) {
+                    document.body.removeChild(dialog);
+                }
+                if (overlay && document.body.contains(overlay)) {
+                    document.body.removeChild(overlay);
+                }
+                document.removeEventListener("keydown", handleDialogKeydown); // Убираем обработчик после закрытия диалога
+            }
+
+            function restoreFocus(element) {
+                if (element) {
+                    element.focus();
+                }
+            }
+
+            function handleDialogKeydown(event) {
+                if (event.key === "Enter") {
+                    onConfirm();
+                    removeDialog(overlay, dialog);
+                    restoreFocus(previousFocus);
+                    event.preventDefault();
+                } else if (event.key === "Escape") {
+                    onCancel();
+                    removeDialog(overlay, dialog);
+                    restoreFocus(previousFocus);
+                    event.preventDefault();
+                }
+            }
+        }
+
+        let currentSortField = "";
+        let currentSortOrder = "asc"; // По умолчанию сортировка по возрастанию
+
+        function sortTable(field) {
+            // Преобразование полей для сортировки
+            let sortField;
+            if (field === "name") {
+                sortField = "nameArticle"; // заменяем name на nameArticle
+            } else if (field === "price") {
+                sortField = "priceArticle"; // заменяем price на priceArticle
+            }
+
+            // Если пользователь нажал на ту же колонку, меняем порядок сортировки
+            if (currentSortField === sortField) {
+                currentSortOrder = currentSortOrder === "asc" ? "desc" : "asc";
+            } else {
+                currentSortField = sortField;
+                currentSortOrder = "asc"; // Новый столбец сортируем по возрастанию
+            }
+
+            updateSortIndicators(field, currentSortOrder);
+
+            loadData();
+            /*
+              console.log(currentSortField);
+              console.log(currentSortOrder);
+              */
+        }
+
+        /*
+        function updateSortIndicators(field, order) {
+            document.querySelector('.name-header').classList.remove('active-sort');
+            document.querySelector('.price-header').classList.remove('active-sort');
+        
+            if (field === 'name') {
+                document.querySelector('.name-header').classList.add('active-sort');
+                document.getElementById('name-sort-indicator').textContent = order === 'asc' ? '▲' : '▼';
+            } else if (field === 'price') {
+                document.querySelector('.price-header').classList.add('active-sort');
+                document.getElementById('price-sort-indicator').textContent = order === 'asc' ? '▲' : '▼';
+            }
+        }
+            */
+        function updateSortIndicators(field = null, order = null) {
+            document.querySelector(".name-header").classList.remove("active-sort");
+            document.querySelector(".price-header").classList.remove("active-sort");
+
+            if (!field) return;
+
+            if (field === "name") {
+                document.querySelector(".name-header").classList.add("active-sort");
+                document.getElementById("name-sort-indicator").textContent =
+                    order === "asc" ? "▲" : "▼";
+            } else if (field === "price") {
+                document.querySelector(".price-header").classList.add("active-sort");
+                document.getElementById("price-sort-indicator").textContent =
+                    order === "asc" ? "▲" : "▼";
+            }
+        }
+
+        function updateRightTableCount() {
+            const rightTableBody = document.querySelector("#orderTable tbody");
+            const productCount = rightTableBody.querySelectorAll("tr").length;
+            const productCountSpan = document.getElementById("product-count-right");
+
+            productCountSpan.textContent = `(${productCount} Шт.)`;
+        }
+
+        function scrollToTop() {
+            const productTableBody = document.querySelector("#productTable tbody");
+            if (productTableBody) {
+                //console.log("Current scroll position before:", productTableBody.scrollTop);
+                productTableBody.scrollTop = 0; // Прокрутить к началу
+                //console.log("Current scroll position after:", productTableBody.scrollTop);
+            } else {
+                //console.error("Table body not found");
+            }
+        }
+
+        let preloadedImages = {}; // Объект для хранения предзагруженных изображений
+
+        function preloadImages(items) {
+            items.forEach(item => {
+                const largeImage = new Image();
+                largeImage.src = `image/400x400/${item.codeArticle}.jpg`;
+
+                // Сохраняем изображение в объект по ключу codeArticle
+                preloadedImages[item.codeArticle] = largeImage;
+
+                largeImage.onerror = function () {
+                    console.error(`Ошибка загрузки изображения для ${item.codeArticle}`);
+                };
+            });
+        }
+
+        function handleMouseOver(event, codeArticle) {
+            const largeImage = preloadedImages[codeArticle];
+            if (largeImage && largeImage.complete) { // Проверяем, что изображение загружено
+                productImage.style.display = "block";
+                productImage.src = largeImage.src;
+                positionImage(event);
+            }
+        }
+
+        function handleMouseMove(event) {
+            positionImage(event);
+        }
+
+        function handleMouseLeave() {
+            productImage.style.display = "none";
+            productImage.src = "";
+        }
+
+        async function loadData(categoryArticle = "", categoryName = "") {
+            clearPreviousData();
+            const searchInput = document
+                .getElementById("searchInput")
+                .value.toLowerCase()
+                .trim();
+            //const categoryInput = document.getElementById('category-input').dataset.categoryArticle || categoryArticle;
+            let categoryInput =
+                document.getElementById("category-input").dataset.categoryArticle ||
+                categoryArticle;
+            const productImage = document.getElementById("productImage");
+            const loadingIndicator = document.getElementById("loading-spinner");
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            const searchType = document.querySelector('input[name="searchType"]:checked').value;
+            const fixCategoryCheckbox = document.getElementById("fix-category-checkbox");
+            const fixProfitablyCheckbox = document.getElementById("fix-profitably-checkbox");
+            const inputField = document.getElementById("category-input");
+            const profitably = fixProfitablyCheckbox
+                ? fixProfitablyCheckbox.checked
+                    ? 1
+                    : 0
+                : 0;
+
+            if (searchInput === "" && categoryInput === "" && profitably === 0) {
+                inputField.value = "../";
+                categoryInput = "";
+                clearTable();
+                return;
+            }
+
+            if (!currentSortField) {
+                updateSortIndicators(); // Вызов без параметров для скрытия всех индикаторов
+            }
+
+            if (!fixCategoryCheckbox.checked && searchInput !== "") {
+                categoryInput = ""; // Сброс категории на корневую при поиске
+                inputField.value = "../";
+            }
+
+            const searchWords = searchInput.split(" ");
+            loadingIndicator.style.display = "flex";
+
+            let sortField = currentSortField || "nameArticle";
+            let sortOrder = currentSortOrder || "asc";
+
+            let filteredProductCount = 0;
+
+            // Создаем элемент для текста загрузки, если его еще нет
+            let loadingText = document.getElementById("loading-text");
+            if (!loadingText) {
+                loadingText = document.createElement("span");
+                loadingText.id = "loading-text";
+                loadingText.style.position = "absolute";  // Позиционируем элемент
+                loadingText.style.top = "60%";  // Центрируем по вертикали
+                loadingText.style.left = "50%";  // Центрируем по горизонтали
+                loadingText.style.transform = "translate(-50%, -50%)";  // Точное центрирование
+                loadingText.style.zIndex = "1000";  // Убедитесь, что элемент будет сверху
+                loadingText.style.display = "inline";  // Сразу показываем
+                loadingText.textContent = `Загружено товара: ${filteredProductCount}`;
+                loadingText.style.display = "block";
+                document.body.appendChild(loadingText); // Добавляем в body или в нужный контейнер
+            }
+
+            fetch(`bd/products.php?categoryArticle=${categoryInput}&searchInput=${searchInput}&searchType=${searchType}&sortField=${sortField}&sortOrder=${sortOrder}&profitably=${profitably}`)
+                .then((response) => response.json())
+                .then((productData) => {
+                    //console.log(productData);
+                    fetch("bd/categories.php")
+                        .then((response) => response.json())
+                        .then((categoryData) => {
+                            const productTableBody = document.querySelector(
+                                "#productTable tbody"
+                            );
+                            const productTableScroll = document.querySelector(
+                                "#productTableContainer"
+                            );
+                            const fragment = document.createDocumentFragment();
+                            let hasMatches = false;
+
+                            const categoryArticlesToCheck = [categoryInput];
+                            categoryData.forEach((category) => {
+                                if (category.SubCategoryArticle === categoryInput) {
+                                    categoryArticlesToCheck.push(category.CategoryArticle);
+                                }
+                            });
+
+                            // Обновляем loadingText перед загрузкой товаров
+                            loadingText.textContent = `Загружено товара: 0`;
+
+                            productData.forEach((item) => {
+                                const productName = item.nameArticle.toLowerCase();
+                                const productCode = item.codeArticle.toString();
+                                const productCategory = item.CategoryArticle;
+
+                                const matchesCategory =
+                                    categoryInput === "" ||
+                                    categoryArticlesToCheck.includes(productCategory);
+                                let matchesSearch = searchWords.every(
+                                    (word) => productName.includes(word) || productCode.includes(word)
+                                );
+
+                                if (matchesCategory && matchesSearch) {
+                                    hasMatches = true;
+                                    filteredProductCount++;
+
+                                    // Обновление текста в loadingText
+                                    loadingText.textContent = `Загружено товара: ${filteredProductCount}`;
+
+                                    const row = createProductRow(item, searchType, isMobile);
+                                    fragment.appendChild(row);
+
+                                }
+                            });
+
+                            if (!hasMatches) {
+                                const noResultsRow = document.createElement("tr");
+                                noResultsRow.innerHTML = `<td colspan="5" style="text-align: center;">Подходящих записей не найдено</td>`;
+                                fragment.appendChild(noResultsRow);
+                                productImage.style.display = "none";
+                            }
+
+                            const productCountSpan = document.getElementById("product-count");
+                            productCountSpan.textContent = `(${filteredProductCount} Шт.)`;
+
+                            productTableBody.innerHTML = "";
+                            productTableBody.appendChild(fragment);
+
+                            updateImages("productTable", noimgLeft.checked, imgsizeLeft.value);
+                            loadingIndicator.style.display = "none";
+                            loadingText.style.display = "none";
+
+                            productTableScroll.scrollTop = 0;
+
+                            // Вызываем обработчик для .photo-link и img в td.img
+                            handleImagePreview('.photo-link, td.img img');
+                        });
+                });
+        }
+
+        // Очистка предыдущих данных и обработчиков
+        function clearPreviousData() {
+            const productTableBody = document.querySelector("#productTable tbody");
+            productTableBody.innerHTML = ""; // Очистить таблицу
+
+            // Удалить старые обработчики событий
+            const rows = productTableBody.querySelectorAll(".product-row");
+            rows.forEach((row) => removeEventListenersFromElement(row));
+        }
+
+        // Функция для удаления событий
+        function removeEventListenersFromElement(element) {
+            const clone = element.cloneNode(true);
+            element.parentNode.replaceChild(clone, element); // Заменить элемент на его клон, тем самым удалив все обработчики событий
+            return clone;
+        }
+
+        function createProductRow(item, searchType, isMobile) {
+            const row = document.createElement("tr");
+            row.classList.add("product-row");
+            row.dataset.code = item.codeArticle;
+            row.dataset.price = item.priceArticle;
+            row.dataset.originalPrice = item.priceArticle;
+
+            const rightTableQuantity = getRightTableQuantity(item.codeArticle);
+            const initialQuantity = rightTableQuantity !== null ? rightTableQuantity : 0;
+            row.dataset.quantity = initialQuantity;
+
+            const discount = parseFloat(document.getElementById("discount").value) || 0;
+            const discountedPrice = (item.priceArticle * 100) / (discount + 100);
+
+            row.innerHTML = `<td style="text-align: left;">${item.codeArticle}</td>
+            <td class="img">
+                <a href="#" class="photo-link" style="color: blue; text-decoration: underline; display: none;" data-code="${item.codeArticle}">Фото</a>
+                <img id="img-${item.codeArticle}" data-code="${item.codeArticle}" src='image/60x60/${item.codeArticle}.jpg' alt='${item.nameArticle}' 
+                onerror="this.onerror=null;this.style.display='none';this.parentElement.querySelector('.photo-link').style.display='inline';">
+            </td>
+            <td style="text-align: left;">${item.nameArticle}</td>
+            <td style="text-align: left;">
+                <input type="number" value="${initialQuantity}" min="0" class="quantity-input" data-initial-value="${initialQuantity}">
+            </td>
+            <td style="text-align: right;">${discountedPrice.toFixed(2)}</td>`;
+            /*        <img id="img-${item.codeArticle}" data-code="${
+            item.codeArticle
+          }" src='image/60x60/${item.codeArticle}.jpg' alt='${
+            item.nameArticle
+          }' onerror="this.onerror=null;this.style.display='none';this.parentElement.querySelector('.photo-link').style.display='inline';">
+          */
+
+            // После вставки строки вызываем обновление стилей
+            updateImages("productTable", noimgLeft.checked, imgsizeLeft.value);
+
+            const quantityInput = row.querySelector(".quantity-input");
+
+            row.addEventListener("click", function (e) {
+                // Убедимся, что клик был по строке, а не по самому input
+                if (e.target !== quantityInput) {
+                    quantityInput.focus();
+                    quantityInput.select(); // Выделяем текст для изменения
+                }
+            });
+
+            // Событие для input поля с количеством
+            quantityInput.addEventListener("input", function () {
+                // Получаем значение, удаляем ведущие нули
+                let value = this.value.replace(/^0+/, "");
+
+                // Если пользователь удалил все цифры, значение станет пустым
+                // Чтобы избежать этого, задаем минимум "0"
+                if (value === "") {
+                    value = "0";
+                }
+
+                // Обновляем значение input
+                this.value = value;
+
+                // Обновляем количество в dataset и вызываем другие функции
+                const newQuantity = parseInt(this.value) || 0;
+                row.dataset.quantity = newQuantity;
+                moveRight(row, newQuantity); // Ваша логика для обновления правой таблицы
+            });
+
+            // Добавление классов при фокусе на input
+            quantityInput.addEventListener("focus", function () {
+                row.classList.add("highlight");
+            });
+
+            // Удаление классов при уходе фокуса с input
+            quantityInput.addEventListener("blur", function () {
+                row.classList.remove("highlight");
+            });
+
+            // События при наведении мыши на строку
+            row.addEventListener("mouseover", function () {
+                row.classList.add("highlight");
+            });
+
+            row.addEventListener("mouseout", function () {
+                if (document.activeElement !== quantityInput) {
+                    row.classList.remove("highlight");
+                }
+            });
+
+            // Обработка предварительного просмотра изображений (для ПК)
+            if (!isMobile) {
+                handleImagePreview('.photo-link, td.img img');
+            }
+
+            return row;
+        }
+
+        function clearTable() {
+            const productCountSpan = document.getElementById("product-count");
+            productCountSpan.textContent = ``;
+            const productTableBody = document.querySelector("#productTable tbody");
+            productTableBody.innerHTML = "";
+            const noSearchRow = document.createElement("tr");
+            noSearchRow.innerHTML = `<td colspan="5" style="text-align: center;">Введите запрос для поиска</td>`;
+            productTableBody.appendChild(noSearchRow);
+            productImage.style.display = "none";
+        }
+
+        // Вспомогательная функция для получения количества из правой таблицы
+        function getRightTableQuantity(productCode) {
+            const orderTable = document.querySelector("#orderTable tbody");
+            const orderRows = orderTable.querySelectorAll("tr");
+            for (const row of orderRows) {
+                if (row.cells[1].textContent === productCode) {
+                    const quantityInput = row.querySelector(".quantity-input");
+                    return parseInt(quantityInput.value) || 0;
+                }
+            }
+            return null;
+        }
+
+        // Функция для проверки и перезагрузки изображений
+        function checkAndReloadImages() {
+            const images = document.querySelectorAll("img");
+            let unloadedImages = [];
+
+            images.forEach((img) => {
+                if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+                    unloadedImages.push(img);
+                }
+            });
+
+            if (unloadedImages.length > 0) {
+                setTimeout(() => {
+                    unloadedImages.forEach((img) => {
+                        img.src = img.src; // Перезагрузка изображения
+                    });
+                    checkAndReloadImages(); // Повторная проверка через 5 секунд
+                }, 5000);
+            }
+        }
+
+        let lastHoveredImageTime = 0;  // Время последнего обновления картинки для уменьшения задержки
+
+        function showLargeImage(event) {
+            const targetElement = event.target;
+            let photoLink, img;
+
+            // Проверяем, что навели на ссылку или изображение
+            if (targetElement.classList.contains('photo-link')) {
+                // Если навели на ссылку, ищем изображение по data-code
+                photoLink = targetElement;
+                img = document.querySelector(`img[data-code="${photoLink.dataset.code}"]`);
+            } else if (targetElement.tagName === 'IMG') {
+                // Если навели на изображение, просто используем его
+                img = targetElement;
+                photoLink = img.closest('td').querySelector('.photo-link'); // Находим ссылку в родительской ячейке
+            }
+
+            // Чтобы избежать слишком частых обновлений, проверим время между обновлениями
+            const now = Date.now();
+            if (now - lastHoveredImageTime < 100) { // 100 миллисекунд для быстрого обновления
+                return;
+            }
+
+            // Обновляем время последнего наведения
+            lastHoveredImageTime = now;
+
+            // Регулярное выражение для поиска размера изображения в пути
+            const currentSize = img.src.match(/(\d+x\d+)\//); // Например, '60x60', '135x135' и т.д.
+            if (currentSize) {
+                const largeImageSrc = img.src.replace(currentSize[0], '400x400/'); // Заменяем текущий размер на 400x400
+                const productImage = document.getElementById('productImage');
+
+                // Удаляем старую картинку (если она существует)
+                if (productImage) {
+                    productImage.src = ''; // Очищаем src
+                }
+
+                // Изменяем источник большого изображения
+                productImage.src = largeImageSrc;
+
+                // Позиционируем изображение с учетом позиции курсора
+                positionImage(event);
+
+                // Отображаем картинку
+                productImage.style.display = 'block';
+            }
+        }
+
+        // Функция для скрытия большого изображения
+        function hideLargeImage() {
+            const productImage = document.getElementById('productImage');
+            if (productImage) {
+                productImage.style.display = 'none';
+
+                // Убираем картинку, когда уходим с элемента
+                productImage.src = ''; // Очищаем src, чтобы старое изображение не было видно
+            } else {
+                //console.log("Не найден элемент с id 'productImage' для скрытия");
+            }
+        }
+
+        function handleImagePreview(selector) {
+            //console.log("ГОЙДА");  // Лог для проверки, что обработчики добавляются
+
+            const elements = document.querySelectorAll(selector);
+
+            // Логируем, сколько элементов найдено
+            //console.log("Найдено элементов: ", elements.length);
+
+            if (elements.length === 0) {
+                //console.log("Нет элементов, соответствующих селектору:", selector);
+            }
+
+            elements.forEach((el) => {
+                // Проверяем, что элемент найден и это либо ссылка с классом 'photo-link', либо изображение
+                if (el && (el.classList.contains('photo-link') || el.tagName === 'IMG')) {
+                    el.addEventListener('mouseenter', showLargeImage); // Показываем большое изображение при наведении
+                    el.addEventListener('mouseleave', hideLargeImage); // Скрываем большое изображение при выходе
+                }
+            });
+        }
+
+        // Функция для позиционирования большого изображения относительно курсора
+        function positionImage(event) {
+            const productImage = document.getElementById('productImage');
+            if (!productImage) return;
+
+            const mouseX = event.clientX; // Позиция курсора по оси X
+            const mouseY = event.clientY; // Позиция курсора по оси Y
+
+            // Ширина и высота большого изображения
+            const imgWidth = 400;
+            const imgHeight = 400;
+
+            // Расчет новых координат для изображения
+            let topPosition = mouseY + 10; // 10px от курсора по вертикали
+            let leftPosition = mouseX + 10; // 10px от курсора по горизонтали
+
+            // Проверка, не выходит ли изображение за правый край экрана
+            if (leftPosition + imgWidth > window.innerWidth) {
+                leftPosition = mouseX - imgWidth + 100; // Перемещаем влево, если выходит за правый край
+            }
+
+            // Проверка, не выходит ли изображение за нижний край экрана
+            if (topPosition + imgHeight > window.innerHeight) {
+                topPosition = mouseY - imgHeight + 100; // Перемещаем вверх, если выходит за нижний край
+
+                // Если картинка слишком высоко, корректируем её по высоте
+                if (topPosition < 0) {
+                    topPosition = 10; // Если картинка слишком высоко, ставим её на верхний предел
+                }
+            }
+
+            // Устанавливаем позицию для изображения
+            productImage.style.left = `${leftPosition}px`;
+            productImage.style.top = `${topPosition}px`;
+        }
+
+        // Добавление слушателя события для движения мыши
+        document.addEventListener('mousemove', positionImage);
+
+        //Эта функция для инициализации ввода количества
+        function initializeQuantityInputListeners() {
+            const quantityInputs = document.querySelectorAll(".quantity-input");
+            quantityInputs.forEach((input) => {
+                input.addEventListener("click", function (event) {
+                    event.stopPropagation(); // Stop the click event from propagating
+                });
+            });
+        }
+
+        function updateOrderButtonState() {
+            const orderTable = document
+                .getElementById("orderTable")
+                .getElementsByTagName("tbody")[0];
+            const orderButton = document.getElementById("order-button");
+            // Если таблица пуста, отключаем кнопку
+            orderButton.disabled = orderTable.children.length === 0;
+        }
+
+        updateOrderButtonState();
+
+        function moveRight(row, newQuantity) {
+            updateOrderButtonState(); // Обновляем состояние кнопки перед любыми операциями
+
+            const orderTable = document
+                .getElementById("orderTable")
+                .getElementsByTagName("tbody")[0];
+            const kod = row.cells[0].textContent;
+            const naimenovanie = row.cells[2].textContent;
+            const originalPrice = parseFloat(row.dataset.price);
+            const discount = parseFloat(document.getElementById("discount").value) || 0;
+            const discountedPrice = (originalPrice * 100) / (discount + 100);
+            const sum = discountedPrice * newQuantity;
+
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            let existingRow = Array.from(orderTable.getElementsByTagName("tr")).find(
+                (tr) => tr.cells[1].textContent === kod
+            );
+
+            if (existingRow) {
+                const quantityInput = existingRow.querySelector(".quantity-input");
+                const previouslyFocused = document.activeElement === quantityInput;
+
+                quantityInput.value = newQuantity;
+                existingRow.cells[6].textContent = sum.toFixed(2);
+
+                if (newQuantity < 1) {
+                    createDialog(
+                        existingRow,
+                        kod,
+                        () => {
+                            existingRow.remove();
+                            delete currentItems[kod];
+                            updateLeftTableQuantity(kod, 0);
+                            updateTotalPrice();
+                            updateOrderButtonState(); // Обновляем состояние кнопки после удаления строки
+                            saveOrderTemp();
+                            updateRightTableCount();
+                        },
+                        () => {
+                            quantityInput.value = 1;
+                            updateLeftTableQuantity(kod, 1);
+                            currentItems[kod] = 1;
+                            saveOrderTemp();
+                            updateRightTableCount();
+                        }
+                    );
+                }
+
+                // Восстановление фокуса на quantityInput, если он был активен
+                if (previouslyFocused) {
+                    quantityInput.focus();
+                    quantityInput.select(); // Выделяем текст в поле
+                }
+            } else {
+                const clonedRow = document.createElement("tr");
+                const sizeFolder = getSizeFolder();
+
+                clonedRow.innerHTML = `<td class="checkbox-cell" style="display: none;"><input class="checkbox" type="checkbox"></td>
+            <td>${kod}</td>
+            <td class="image-cell" style="text-align: center;">
+                <a href="#" class="photo-link" style="color: blue; text-decoration: underline;" data-code="${kod}">Фото</a>
+                <img data-code="${kod}" src="image/${sizeFolder}/${kod}.jpg" alt="${naimenovanie}" style="display: none;" onerror="this.onerror=null;this.style.display='none';">
+            </td>
+            <td class="name-cell" style="display: none;">${naimenovanie}</td>
+            <td class="price-cell" style="display: none; text-align: right; vertical-align: middle;" data-original-price="${originalPrice.toFixed(
+                    2
+                )}">${discountedPrice.toFixed(2)}</td>
+            <td><input type="number" value="${newQuantity}" min="0" class="quantity-input right">
+                <span class="remove-item" style="cursor: pointer; color: red; margin-left: 5px;">
+                    <div style='z-index:1;' class="tooltip-container">
+                        <img style="width:21.25px;" src="img/icon_delete.png" data-static="true">
+                        <span class="tooltip-text">Удалить</span>
+                    </div>
+                </span>
+            </td>
+            <td style="text-align: right;">${sum.toFixed(2)}</td>`;
+
+                const quantityInput = clonedRow.querySelector(".quantity-input");
+
+                quantityInput.addEventListener("input", function (event) {
+                    const updatedQuantity = parseInt(this.value) || 0;
+
+                    if (
+                        event.inputType === "deleteContentBackward" ||
+                        event.inputType === "deleteContentForward"
+                    ) {
+                        if (updatedQuantity < 1) {
+                            const nextRow = clonedRow.nextElementSibling; // Следующая строка
+                            const prevRow = clonedRow.previousElementSibling; // Предыдущая строка
+
+                            // Удаляем строку
+                            clonedRow.remove();
+                            delete currentItems[kod];
+                            updateLeftTableQuantity(kod, 0);
+                            updateTotalPrice();
+                            updateOrderButtonState();
+                            saveOrderTemp();
+                            updateRightTableCount();
+
+                            // Перемещаем фокус
+                            if (nextRow) {
+                                const nextInput = nextRow.querySelector(".quantity-input");
+                                if (nextInput) {
+                                    nextInput.focus(); // Перемещаем фокус на следующую строку
+                                    nextInput.select(); // Выделяем текст в следующем input
+                                }
+                            } else if (prevRow) {
+                                const prevInput = prevRow.querySelector(".quantity-input");
+                                if (prevInput) {
+                                    prevInput.focus(); // Перемещаем фокус на предыдущую строку, если следующей нет
+                                    prevInput.select(); // Выделяем текст в предыдущем input
+                                }
+                            }
+                        }
+                    } else if (updatedQuantity < 1) {
+                        createDialog(
+                            clonedRow,
+                            kod,
+                            () => {
+                                clonedRow.remove();
+                                delete currentItems[kod];
+                                updateLeftTableQuantity(kod, 0);
+                                updateTotalPrice();
+                                updateOrderButtonState(); // Обновляем состояние кнопки после удаления строки
+                                saveOrderTemp();
+                                updateRightTableCount();
+                            },
+                            () => {
+                                quantityInput.value = 1;
+                                updateLeftTableQuantity(kod, 1);
+                                currentItems[kod] = 1;
+                                saveOrderTemp();
+                                updateRightTableCount();
+                            }
+                        );
+                    } else {
+                        currentItems[kod] = updatedQuantity;
+                        updateLeftTableQuantity(kod, updatedQuantity);
+                        updateTotalPrice();
+                        saveOrderTemp();
+                        updateRightTableCount();
+                    }
+
+                    // Сохранение фокуса на поле ввода
+                    quantityInput.focus();
+                });
+
+                clonedRow.addEventListener("click", function (e) {
+                    if (e.target.tagName !== "INPUT") {
+                        const quantityInput = this.querySelector(".quantity-input");
+                        quantityInput.focus();
+                        quantityInput.select();
+                    }
+                });
+
+                clonedRow.classList.add("product-row");
+                quantityInput.addEventListener("focus", function () {
+                    clonedRow.classList.add("highlight");
+                });
+
+                quantityInput.addEventListener("blur", function () {
+                    clonedRow.classList.remove("highlight");
+                });
+
+                clonedRow.addEventListener("mouseover", function () {
+                    clonedRow.classList.add("highlight");
+                });
+
+                clonedRow.addEventListener("mouseout", function () {
+                    if (document.activeElement !== quantityInput) {
+                        clonedRow.classList.remove("highlight");
+                    }
+                });
+
+                orderTable.appendChild(clonedRow);
+
+                const removeItemButton = clonedRow.querySelector(".remove-item");
+                removeItemButton.addEventListener("click", function () {
+                    const nextRow = clonedRow.nextElementSibling;
+                    const prevRow = clonedRow.previousElementSibling;
+
+                    clonedRow.remove();
+                    delete currentItems[kod];
+                    updateLeftTableQuantity(kod, 0);
+                    updateTotalPrice();
+                    updateOrderButtonState();
+                    saveOrderTemp();
+                    updateRightTableCount();
+
+                    // Перемещение фокуса
+                    if (nextRow) {
+                        const nextInput = nextRow.querySelector(".quantity-input");
+                        if (nextInput) {
+                            nextInput.focus();
+                            nextInput.select(); // Выделяем текст в следующем input
+                        }
+                    } else if (prevRow) {
+                        const prevInput = prevRow.querySelector(".quantity-input");
+                        if (prevInput) {
+                            prevInput.focus();
+                            prevInput.select(); // Выделяем текст в предыдущем input
+                        }
+                    }
+                });
+            }
+
+            updateTotalPrice();
+            sortOrderTable();
+            initializeQuantityInputListeners();
+            updateImages("orderTable", noimgRight.checked, imgsizeRight.value);
+            updateOrderButtonState(); // Обновляем состояние кнопки после добавления строки
+            saveOrderTemp();
+            updateRightTableCount();
+
+            // Вызываем обработчик для .photo-link и img в td.image-cell
+            handleImagePreview('.photo-link, td.image-cell img');
+        }
+
+        const searchInput = document.getElementById("searchInput");
+        const searchHistoryList = document.getElementById("searchHistory");
+        const cookieConsent = document.getElementById("cookieConsent");
+
+        function getCookie(name) {
+            let matches = document.cookie.match(
+                new RegExp(
+                    "(?:^|; )" +
+                    name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, "\\$1") +
+                    "=([^;]*)"
+                )
+            );
+            return matches ? decodeURIComponent(matches[1]) : undefined;
+        }
+
+        function setCookie(name, value, options = {}) {
+            options = {
+                path: "/",
+                ...options,
+            };
+
+            if (options.expires instanceof Date) {
+                options.expires = options.expires.toUTCString();
+            }
+
+            let updatedCookie =
+                encodeURIComponent(name) + "=" + encodeURIComponent(value);
+
+            for (let optionKey in options) {
+                updatedCookie += "; " + optionKey;
+                let optionValue = options[optionKey];
+                if (optionValue !== true) {
+                    updatedCookie += "=" + optionValue;
+                }
+            }
+
+            document.cookie = updatedCookie;
+        }
+
+        function deleteCookie(name) {
+            setCookie(name, "", {
+                "max-age": -1,
+            });
+        }
+
+        let searchHistory = getCookie("searchHistory")
+            ? JSON.parse(getCookie("searchHistory"))
+            : [];
+
+        function updateHistoryList() {
+            searchHistoryList.innerHTML = ""; // Очистить datalist
+            searchHistory.forEach((query) => {
+                const option = document.createElement("option");
+                option.value = query;
+                searchHistoryList.appendChild(option);
+            });
+        }
+
+        function addSearchQuery(query) {
+            if (getCookie("cookiesAccepted")) {
+                if (query && !searchHistory.includes(query)) {
+                    if (searchHistory.length >= 10) {
+                        searchHistory.pop();
+                    }
+                    searchHistory.unshift(query);
+                    setCookie("searchHistory", JSON.stringify(searchHistory), {
+                        "max-age": 3600 * 24 * 30,
+                    });
+                    updateHistoryList();
+                }
+            }
+        }
+
+        // Функция для сохранения данных в куки
+        function saveFormData() {
+            if (getCookie("cookiesAccepted")) {
+                const formData = {
+                    customerName: document.getElementById("customerName").value,
+                    customerPhone: document.getElementById("customerPhone").value,
+                    customerEmail: document.getElementById("customerEmail").value,
+                    managerSelect: document.getElementById("managerSelect").value,
+                    AnyComments: document.getElementById("AnyComments").value,
+                };
+
+                setCookie("formData", JSON.stringify(formData), {
+                    "max-age": 3600 * 24 * 30,
+                });
+            }
+        }
+
+        function saveUserSettings() {
+            if (getCookie("cookiesAccepted")) {
+                const userSettings = {
+                    noimgLeft: document.getElementById("noimgLeft").checked,
+                    imgsizeLeft: document.getElementById("imgsizeLeft").value,
+                    syncLeft: document.getElementById("syncLeft").checked,
+                    noimgRight: document.getElementById("noimgRight").checked,
+                    imgsizeRight: document.getElementById("imgsizeRight").value,
+                    syncRight: document.getElementById("syncRight").checked,
+                };
+
+                setCookie("userSettings", JSON.stringify(userSettings), {
+                    "max-age": 3600 * 24 * 30,
+                }); // Куки на 30 дней
+            }
+        }
+
+        // Объявляем функцию saveOrder глобально
+        function saveOrderTemp() {
+            if (getCookie("cookiesAccepted")) {
+                const orderData = [];
+                document.querySelectorAll("#orderTable tbody tr").forEach((row) => {
+                    const quantity = row.cells[5].querySelector("input").value;
+
+                    // Пропускаем товары с количеством 0
+                    if (parseInt(quantity) > 0) {
+                        const item = {
+                            code: row.cells[1].textContent, // Сохраняем только код
+                            quantity: quantity, // Сохраняем количество
+                        };
+                        orderData.push(item);
+                    }
+                });
+                localStorage.setItem("orderData", JSON.stringify(orderData));
+            }
+        }
+
+        function saveCheckOrderState() {
+            const checkOrder = document.querySelector(".CheckOrder");
+            const isChecked = checkOrder.checked;
+            setCookie("checkOrderState", isChecked, { "max-age": 3600 * 24 * 30 }); // Сохраняем на 30 дней
+        }
+
+        function loadCheckOrderState() {
+            const savedState = getCookie("checkOrderState");
+            const checkOrder = document.querySelector(".CheckOrder");
+
+            if (savedState !== undefined) {
+                checkOrder.checked = savedState === "true"; // Преобразуем строку в булевое значение
+            }
+        }
+
+        // Добавляем обработчики события blur для каждого поля
+        document.getElementById("customerName").addEventListener("blur", saveFormData);
+        document.getElementById("customerPhone").addEventListener("blur", saveFormData);
+        document.getElementById("customerEmail").addEventListener("blur", saveFormData);
+        document.getElementById("managerSelect").addEventListener("blur", saveFormData);
+        document.getElementById("AnyComments").addEventListener("blur", saveFormData);
+
+        document
+            .getElementById("noimgLeft")
+            .addEventListener("change", saveUserSettings);
+        document
+            .getElementById("imgsizeLeft")
+            .addEventListener("change", saveUserSettings);
+        document
+            .getElementById("syncLeft")
+            .addEventListener("change", saveUserSettings);
+        document
+            .getElementById("noimgRight")
+            .addEventListener("change", saveUserSettings);
+        document
+            .getElementById("imgsizeRight")
+            .addEventListener("change", saveUserSettings);
+        document
+            .getElementById("syncRight")
+            .addEventListener("change", saveUserSettings);
+
+        document
+            .querySelector(".CheckOrder")
+            .addEventListener("change", saveCheckOrderState);
+
+        searchInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                const query = searchInput.value.trim();
+                addSearchQuery(query);
+            }
+        });
+
+        // Принятие куки
+        window.acceptCookies = function () {
+            setCookie("cookiesAccepted", "true", { "max-age": 3600 * 24 * 30 });
+            document.getElementById("cookieConsentOverlay").classList.add("hidden");
+        };
+
+        // Функция для отклонения куки
+        window.declineCookies = function () {
+            setCookie("cookiesDeclined", "true", { "max-age": 3600 * 24 * 30 });
+            document.getElementById("cookieConsentOverlay").classList.add("hidden");
+            // Здесь можно удалить куки, которые нельзя хранить
+            deleteCookie("searchHistory"); // Пример: удаляем историю поиска
+            disableCookieBasedFeatures(); // Вызываем функцию для отключения функционала, зависящего от куки
+        };
+
+        // Отключение функционала, который использует куки (например, сохранение истории)
+        function disableCookieBasedFeatures() {
+            console.log("Функционал, связанный с куки, отключён.");
+            // Добавь сюда логику для отключения/очистки функционала, который требует куки
+        }
+
+        // Проверка куков при загрузке страницы
+        window.onload = function () {
+            const cookieConsentOverlay = document.getElementById("cookieConsentOverlay");
+
+            if (getCookie("cookiesAccepted")) {
+                // Если куки приняты, скрываем оверлей
+                cookieConsentOverlay.classList.add("hidden");
+                restoreOrderTable();
+                loadCheckOrderState();
+            } else if (getCookie("cookiesDeclined")) {
+                // Если куки отклонены, также скрываем оверлей, но отключаем куки-зависимые функции
+                cookieConsentOverlay.classList.add("hidden");
+                disableCookieBasedFeatures();
+            } else {
+                // Показываем оверлей, если куки не установлены
+                cookieConsentOverlay.classList.remove("hidden");
+            }
+        };
+
+        /*
+        // Отклонение куки
+        window.declineCookies = function () {
+            setCookie('cookiesDeclined', 'true', { 'max-age': 3600 * 24 * 30 });
+            document.getElementById('cookieConsentOverlay').style.display = 'none'; // Скрываем уведомление
+            deleteCookie('searchHistory'); // Пример: удаляем историю поиска
+        };
+        
+        if (getCookie('cookiesAccepted')) {
+            cookieConsent.style.display = 'none';
+            restoreOrderTable();
+        }
+        
+        if (getCookie('cookiesDeclined')) {
+            cookieConsent.style.display = 'none';
+            deleteCookie('searchHistory'); // Удаляем историю поиска при загрузке, если куки были отклонены
+        }
+            */
+
+        updateHistoryList();
+
+        function restoreOrderTable() {
+            const savedOrder = JSON.parse(localStorage.getItem("orderData") || "[]");
+            const orderTable = document.querySelector("#orderTable tbody");
+            const rows = []; // Массив для хранения строк перед их добавлением в таблицу
+            let itemsProcessed = 0;
+
+            const delayPerItem = 150;
+            const totalDelay = savedOrder.length * delayPerItem;
+
+            savedOrder.forEach((item) => {
+                fetch(`bd/restore_products.php?code=${item.code}`) // Запрос к серверу для получения актуальных данных
+                    .then((response) => response.json())
+                    .then((data) => {
+                        const row = document.createElement("tr");
+                        const discountedPrice = parseFloat(data.priceArticle); // Цена из базы данных
+
+                        row.innerHTML = `<td class="checkbox-cell" style="display: none;"><input class="checkbox" type="checkbox"></td>
+                    <td>${data.codeArticle}</td>
+                    <td class="image-cell" style="text-align: center;">
+                        <a href="#" class="photo-link" style="color: blue; text-decoration: underline;" data-code="${data.codeArticle
+                            }">Фото</a>
+                            <img id="img-${data.codeArticle}" src="image/60x60/${data.codeArticle}.jpg" alt="${data.nameArticle}" data-code="${data.codeArticle}" style="display: none;" onerror="this.onerror=null;this.style.display='none';this.parentElement.querySelector('.photo-link').style.display='inline';">
+                    </td>
+                    <td class="name-cell" style="display: none;">${data.nameArticle
+                            }</td>
+                    <td class="price-cell" style="display: none; text-align: right;" data-original-price="${data.priceArticle
+                            }">${discountedPrice.toFixed(2)}</td>
+                        <td><input type="number" value="${item.quantity
+                            }" min="1" class="quantity-input right">
+                            <span class="remove-item" style="cursor: pointer; color: red; margin-left: 5px;">
+                                <div style='z-index:1;' class="tooltip-container">
+                                    <img style="width:21.25px;" src="img/icon_delete.png" data-static="true">
+                                    <span class="tooltip-text">Удалить</span>
+                                </div>
+                            </span>
+                        </td>
+                    <td style="text-align: right;">${(
+                                discountedPrice * item.quantity
+                            ).toFixed(2)}</td>`;
+
+                        /*
+<img id="img-${data.codeArticle}" src="image/60x60/${data.codeArticle}.jpg" alt="${data.nameArticle}" data-code="${data.codeArticle}" style="display: none;" onerror="this.onerror=null;this.style.display='none';this.parentElement.querySelector('.photo-link').style.display='inline';">
+                        */
+                        rows.push(row); // Сохраняем строку в массиве, а не добавляем сразу в таблицу
+
+                        itemsProcessed++;
+
+                        // Когда все строки загружены, сортируем их и добавляем в таблицу
+                        if (rows.length === savedOrder.length) {
+                            // Сортировка строк по названию товара (4-я колонка)
+                            rows.sort((a, b) => {
+                                const nameA = a.cells[3].textContent.toLowerCase();
+                                const nameB = b.cells[3].textContent.toLowerCase();
+                                return nameA.localeCompare(nameB, "ru");
+                            });
+
+                            // Добавляем отсортированные строки в таблицу
+                            rows.forEach((row) => orderTable.appendChild(row));
+
+                            // Обновление общей суммы
+                            updateTotalPrice();
+                            initializeQuantityInputListeners();
+                            updateOrderButtonState(); // Обновление состояния кнопки после добавления строки
+                            updateRightTableCount();
+
+                            // Вызываем обработчик для .photo-link и img в td.image-cell
+                            handleImagePreview('.photo-link, td.image-cell img');
+                        }
+
+                        const quantityInput = row.querySelector(".quantity-input");
+
+                        quantityInput.addEventListener("input", function (event) {
+                            const newQuantity = parseInt(this.value) || 0;
+
+                            if (
+                                event.inputType === "deleteContentBackward" ||
+                                event.inputType === "deleteContentForward"
+                            ) {
+                                if (newQuantity < 1) {
+                                    const nextRow = row.nextElementSibling; // Следующая строка
+                                    const prevRow = row.previousElementSibling; // Предыдущая строка
+
+                                    // Удаляем строку
+                                    row.remove();
+                                    updateLeftTableQuantity(item.code, 0);
+                                    updateTotalPrice();
+                                    updateOrderButtonState();
+                                    saveOrderTemp();
+                                    updateRightTableCount();
+
+                                    // Перемещаем фокус
+                                    if (nextRow) {
+                                        const nextInput = nextRow.querySelector(".quantity-input");
+                                        if (nextInput) {
+                                            nextInput.focus(); // Перемещаем фокус на следующую строку
+                                            nextInput.select(); // Выделяем текст в следующем input
+                                        }
+                                    } else if (prevRow) {
+                                        const prevInput = prevRow.querySelector(".quantity-input");
+                                        if (prevInput) {
+                                            prevInput.focus(); // Перемещаем фокус на предыдущую строку, если следующей нет
+                                            prevInput.select(); // Выделяем текст в предыдущем input
+                                        }
+                                    }
+                                }
+                            } else if (newQuantity < 1) {
+                                // Показываем диалог подтверждения
+                                createDialog(
+                                    row,
+                                    item.code,
+                                    () => {
+                                        row.remove();
+                                        updateLeftTableQuantity(item.code, 0);
+                                        updateTotalPrice();
+                                        updateOrderButtonState();
+                                        saveOrderTemp();
+                                        updateRightTableCount();
+                                    },
+                                    () => {
+                                        this.value = 1;
+                                        updateLeftTableQuantity(item.code, 1);
+                                        updateTotalPrice();
+                                        updateRightTableCount();
+                                    }
+                                );
+                            } else {
+                                updateLeftTableQuantity(item.code, newQuantity);
+                                const sumCell = row.cells[6];
+                                sumCell.textContent = (newQuantity * discountedPrice).toFixed(2);
+                                updateTotalPrice();
+                                saveOrderTemp();
+                                updateRightTableCount();
+                            }
+                        });
+
+                        row.addEventListener("mouseover", function () {
+                            if (!quantityInput.matches(":focus")) {
+                                row.classList.add("selected");
+                            }
+                        });
+
+                        row.addEventListener("mouseout", function () {
+                            if (!quantityInput.matches(":focus")) {
+                                row.classList.remove("selected");
+                            }
+                        });
+
+                        quantityInput.addEventListener("focus", function () {
+                            row.classList.add("highlight");
+                            row.classList.remove("selected");
+                        });
+
+                        quantityInput.addEventListener("blur", function () {
+                            row.classList.remove("highlight");
+                        });
+
+                        row.addEventListener("click", function () {
+                            quantityInput.focus();
+                            quantityInput.select();
+                        });
+
+                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                        const img = row.querySelector("td.image-cell img");
+                        const photoLink = row.querySelector("td.image-cell .photo-link");
+
+                        row.classList.add("product-row");
+
+                        const removeItemButton = row.querySelector(".remove-item");
+                        removeItemButton.addEventListener("click", function () {
+                            const nextRow = row.nextElementSibling; // Следующая строка
+                            const prevRow = row.previousElementSibling; // Предыдущая строка
+
+                            // Удаляем строку
+                            row.remove();
+                            updateLeftTableQuantity(item.code, 0); // Обновляем количество в левой таблице до 0
+                            updateTotalPrice(); // Обновляем общую сумму
+                            updateOrderButtonState(); // Обновляем состояние кнопки
+                            saveOrderTemp(); // Сохраняем изменения
+                            updateRightTableCount();
+
+                            // Перемещаем фокус
+                            if (nextRow) {
+                                const nextInput = nextRow.querySelector(".quantity-input");
+                                if (nextInput) {
+                                    nextInput.focus(); // Перемещаем фокус на следующую строку
+                                    nextInput.select(); // Выделяем текст в следующем input
+                                }
+                            } else if (prevRow) {
+                                const prevInput = prevRow.querySelector(".quantity-input");
+                                if (prevInput) {
+                                    prevInput.focus(); // Перемещаем фокус на предыдущую строку, если следующей нет
+                                    prevInput.select(); // Выделяем текст в предыдущем input
+                                }
+                            }
+                        });
+                    })
+                    .catch((error) => console.error("Ошибка загрузки данных товара:", error));
+            });
+            setTimeout(() => {
+                const noimgChecked = noimgRight.checked; // Сохраняем текущее состояние "Без картинок"
+                const imgSize = imgsizeRight.value;
+
+                // 1. Применяем альтернативный режим (меняем состояние на противоположное)
+                noimgRight.checked = !noimgChecked;
+
+                // Инициируем событие изменения, чтобы эмулировать ручное нажатие
+                const event = new Event("change");
+                noimgRight.dispatchEvent(event); // Эмулируем событие 'change'
+
+                // 2. Обновляем изображения для изменённого состояния
+                updateImages("orderTable", !noimgChecked, imgSize);
+
+                // Обнуляем padding при включении режима "Без картинок"
+                document.querySelectorAll("#orderTable .image-cell").forEach((cell) => {
+                    if (!noimgChecked) {
+                        cell.style.setProperty("padding", "0", "important"); // Если режим "Без картинок", обнуляем padding
+                    }
+                });
+
+                // 3. Возвращаем исходное состояние, каким оно было до изменения
+                setTimeout(() => {
+                    noimgRight.checked = noimgChecked; // Возвращаем исходное состояние, которое было до переключения
+                    noimgRight.dispatchEvent(event); // Эмулируем событие 'change' для правильного восстановления
+
+                    updateImages("orderTable", noimgChecked, imgSize); // Обновляем изображения на основе исходного состояния
+
+                    // Восстанавливаем padding только если режим "Без картинок" не активен
+                    document.querySelectorAll("#orderTable .image-cell").forEach((cell) => {
+                        if (!noimgChecked) {
+                            cell.style.setProperty("padding", "12px", "important"); // Восстанавливаем padding, если картинки активны
+                        } else {
+                            cell.style.setProperty("padding", "0", "important"); // Оставляем padding 0, если режим "Без картинок"
+                        }
+                    });
+                }, 10); // Небольшая задержка для визуального переключения
+            }, totalDelay);
+        }
+
+        function loadUserSettings() {
+            if (getCookie("cookiesAccepted")) {
+                const savedSettings = JSON.parse(getCookie("userSettings") || "{ }");
+
+                if (savedSettings) {
+                    // Устанавливаем флаги и значения из сохраненных настроек
+                    document.getElementById("noimgLeft").checked =
+                        savedSettings.noimgLeft || false;
+                    document.getElementById("imgsizeLeft").value =
+                        savedSettings.imgsizeLeft || "small";
+                    document.getElementById("syncLeft").checked =
+                        savedSettings.syncLeft || false;
+
+                    document.getElementById("noimgRight").checked =
+                        savedSettings.noimgRight || false;
+                    document.getElementById("imgsizeRight").value =
+                        savedSettings.imgsizeRight || "small";
+                    document.getElementById("syncRight").checked =
+                        savedSettings.syncRight || false;
+
+                    setTimeout(() => {
+                        updateImages(
+                            "productTable",
+                            document.getElementById("noimgLeft").checked,
+                            document.getElementById("imgsizeLeft").value
+                        );
+                        updateImages(
+                            "orderTable",
+                            document.getElementById("noimgRight").checked,
+                            document.getElementById("imgsizeRight").value
+                        );
+                    }, 0); // Задержка в 100 мс
+                }
+
+                // После обновления изображений, вызываем синхронизацию
+                syncState();
+            }
+        }
+
+        function loadFormData() {
+            const formData = JSON.parse(getCookie("formData") || "{ }");
+
+            if (formData.customerName) {
+                document.getElementById("customerName").value = formData.customerName;
+            }
+
+            if (formData.customerPhone) {
+                document.getElementById("customerPhone").value = formData.customerPhone;
+            }
+
+            if (formData.customerEmail) {
+                document.getElementById("customerEmail").value = formData.customerEmail;
+            }
+
+            if (formData.managerSelect) {
+                document.getElementById("managerSelect").value = formData.managerSelect;
+            }
+
+            if (formData.AnyComments) {
+                document.getElementById("AnyComments").value = formData.AnyComments;
+            }
+
+            // Вызываем валидацию сразу после загрузки данных
+            validateInputs();
+        }
+
+        window.addEventListener("DOMContentLoaded", loadFormData);
+
+        // Применяем moveRight к каждой строке из скрытой таблицы
+        document.querySelectorAll("#hiddenTable tbody tr").forEach((row) => {
+            const quantity = parseInt(row.querySelector(".quantity-input").value, 10);
+            moveRight(row, quantity); // Вызываем moveRight для переноса в правую таблицу
+        });
+
+        document
+            .getElementById("ClearRigthTable")
+            .addEventListener("click", function () {
+                if (confirm("Вы действительно хотите очистить список выбранных товаров?")) {
+                    // Очистить правую таблицу
+                    const orderTableBody = document
+                        .getElementById("orderTable")
+                        .getElementsByTagName("tbody")[0];
+                    orderTableBody.innerHTML = ""; // Удаление всех строк
+
+                    // Обнулить все элементы в левой таблице
+                    const productTableBody = document.querySelector("#productTable tbody");
+                    const productRows = productTableBody.getElementsByTagName("tr");
+
+                    Array.from(productRows).forEach((row) => {
+                        const kod = row.cells[0].textContent;
+                        updateLeftTableQuantity(kod, 0); // Обнуление количества
+                        delete currentItems[kod]; // Удаление из текущего списка
+                    });
+
+                    currentItems = {};
+
+                    updateTotalPrice(); // Обновление итоговой суммы
+                    updateOrderButtonState(); // Обновление состояния кнопки
+                    saveOrderTemp();
+                    updateRightTableCount();
+                }
+            });
+
+        // Функция для сортировки таблицы по наименованию товара (4-я колонка)
+        function sortOrderTable() {
+            const orderTable = document
+                .getElementById("orderTable")
+                .getElementsByTagName("tbody")[0];
+            const rowsArray = Array.from(orderTable.rows);
+
+            rowsArray.sort((a, b) => {
+                const nameA = a.cells[3].textContent.toLowerCase();
+                const nameB = b.cells[3].textContent.toLowerCase();
+                return nameA.localeCompare(nameB, "ru");
+            });
+
+            rowsArray.forEach((row) => orderTable.appendChild(row));
+        }
+
+        initializeQuantityInputListeners();
+
+        // Функция для обновления количества в левой таблице
+        function updateLeftTableQuantity(kod, newQuantity) {
+            const productTableBody = document.querySelector("#productTable tbody");
+            const productRow = Array.from(
+                productTableBody.getElementsByTagName("tr")
+            ).find((tr) => tr.cells[0].textContent === kod);
+
+            if (productRow) {
+                const quantityInput = productRow.querySelector(".quantity-input");
+                quantityInput.value = newQuantity;
+                productRow.dataset.quantity = newQuantity;
+            }
+        }
+
+        // Функция для обновления количества в правой таблице
+        function updateRightTableQuantity(kod, newQuantity) {
+            const orderTable = document
+                .getElementById("orderTable")
+                .getElementsByTagName("tbody")[0];
+            const orderRows = orderTable.querySelectorAll("tr");
+            orderRows.forEach((row) => {
+                if (row.cells[1].textContent === kod) {
+                    const quantityInput = row.querySelector(".quantity-input");
+                    quantityInput.value = newQuantity;
+                    row.cells[5].textContent = (
+                        newQuantity * parseFloat(row.cells[3].textContent)
+                    ).toFixed(2);
+                    if (newQuantity === 0) {
+                        row.remove();
+                    }
+                }
+            });
+            updateTotalPrice();
+        }
+
+        //Эта фукцния для сохранения заказа
+        function saveOrderTableState() {
+            const loadingIndicator = document.getElementById("loading-spinner");
+            loadingIndicator.style.display = "flex";
+
+            const orderTable = document
+                .getElementById("orderTable")
+                .getElementsByTagName("tbody")[0];
+            const rows = Array.from(orderTable.getElementsByTagName("tr")).map((row) => {
+                return {
+                    kod: row.cells[1].textContent,
+                    naimenovanie: row.cells[3].textContent,
+                    price: row.cells[4].textContent,
+                    quantity: row.cells[5].querySelector("input").value,
+                };
+            });
+            localStorage.setItem("orderTableState", JSON.stringify(rows));
+
+            loadingIndicator.style.display = "none";
+        }
+
+        function updateTotalPrice() {
+            const discountInput = document.getElementById("discount");
+            const discount = parseFloat(discountInput.value) || 0;
+            updatePricesWithDiscount(discount);
+
+            const orderTable = document
+                .getElementById("orderTable")
+                .getElementsByTagName("tbody")[0];
+            let total = 0;
+            let totalWithoutDiscount = 0;
+
+            Array.from(orderTable.getElementsByTagName("tr")).forEach((tr) => {
+                const quantityInput = tr.querySelector(".quantity-input");
+                if (quantityInput) {
+                    const quantity = parseInt(quantityInput.value) || 0;
+                    const price = parseFloat(tr.cells[4].dataset.originalPrice) || 0;
+
+                    // Рассчитываем стоимость со скидкой
+                    const discountedPrice = (price * 100) / (discount + 100);
+                    const sum = discountedPrice * quantity;
+                    tr.cells[6].textContent = sum.toFixed(2);
+                    total += sum;
+
+                    // Рассчитываем стоимость без скидки
+                    const sumWithoutDiscount = price * quantity;
+                    totalWithoutDiscount += sumWithoutDiscount;
+                }
+            });
+
+            // Обновляем общую стоимость со скидкой
+            document.getElementById("totalPrice").textContent = total.toFixed(2);
+            let totalPriceWithoutDiscountElement = document.getElementById(
+                "TotalPriceWhithoutDiscount"
+            );
+            totalPriceWithoutDiscountElement.textContent =
+                totalWithoutDiscount.toFixed(2);
+        }
+
+        function initializeQuantityInputListeners() {
+            const orderTable = document.getElementById("orderTable");
+            orderTable.addEventListener("input", function (event) {
+                if (event.target.classList.contains("quantity-input")) {
+                    updateTotalPrice(); // Пересчет суммы при изменении количества
+                }
+            });
+        }
+
+        // Вызов этой функции после загрузки страницы и добавления строк в таблицу
+        initializeQuantityInputListeners();
+
+        // Старая функция для выбора всех данных (пока оставлена на всякий случай)
+        function selectAll(tableId) {
+            const table = document.getElementById(tableId);
+            const checkboxes = table.querySelectorAll("input.checkbox");
+            checkboxes.forEach((checkbox) => {
+                checkbox.checked = true;
+                checkbox.closest("tr").classList.add("selected");
+            });
+        }
+        // Старая функция для снятия всех данных (пока оставлена на всякий случай)
+        function deselectAll(tableId) {
+            const table = document.getElementById(tableId);
+            const checkboxes = table.querySelectorAll("input.checkbox");
+            checkboxes.forEach((checkbox) => {
+                checkbox.checked = false;
+                checkbox.closest("tr").classList.remove("selected");
+            });
+        }
+
+        //Функция для сохранения заказа в файл (СДЕЛАТЬ СОХРАНЕНИЕ КУДА-ТО С РАСШИРЕНИЕМ .HZK)
+        function saveOrder() {
+            const orderTableRows = document.querySelectorAll("#orderTable tbody tr");
+            if (orderTableRows.length === 0) {
+                alert("Нельзя сохранить пустой файл");
+                return;
+            }
+
+            const orderData = Array.from(orderTableRows).map((row) => {
+                return {
+                    код: row.cells[1].textContent,
+                    количество: row.cells[5].querySelector("input").value,
+                };
+            });
+
+            const blob = new Blob([JSON.stringify(orderData, null, 2)], {
+                type: "application/json",
+            });
+            const url = URL.createObjectURL(blob);
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, "0");
+            const day = String(now.getDate()).padStart(2, "0");
+            const hours = String(now.getHours()).padStart(2, "0");
+            const minutes = String(now.getMinutes()).padStart(2, "0");
+            const seconds = String(now.getSeconds()).padStart(2, "0");
+            const formattedDate = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `заявка_${formattedDate}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // функция для удаления товара из правой таблицы
+        function moveLeft() {
+            const orderTable = document.getElementById("orderTable");
+            const productTable = document
+                .getElementById("productTable")
+                .getElementsByTagName("tbody")[0];
+            const productImage = document.getElementById("productImage");
+
+            Array.from(orderTable.getElementsByTagName("tr")).forEach((row) => {
+                const checkbox = row.querySelector("input.checkbox");
+                if (checkbox && checkbox.checked) {
+                    if (row.style.backgroundColor === "lightblue") {
+                        row.remove();
+                    } else {
+                        const kod = row.cells[1].textContent;
+                        const naimenovanie = row.cells[2].textContent;
+                        const price = parseFloat(row.cells[3].textContent);
+
+                        let existsInProductTable = false;
+                        Array.from(productTable.getElementsByTagName("tr")).forEach(
+                            (productRow) => {
+                                if (productRow.dataset.code === kod) {
+                                    existsInProductTable = true;
+                                }
+                            }
+                        );
+
+                        if (!existsInProductTable) {
+                            const clonedRow = document.createElement("tr");
+                            clonedRow.classList.add("product-row");
+                            clonedRow.dataset.code = kod;
+
+                            clonedRow.innerHTML = `<td><input class="checkbox" type="checkbox"></td>
+                            <td>${kod}</td>
+                            <td>${naimenovanie}</td>
+                            <td>${price.toFixed(2)}</td>`;
+                            clonedRow.classList.remove("selected");
+                            productTable.appendChild(clonedRow);
+                        }
+
+                        row.remove();
+                        saveOrderTableState();
+                    }
+                }
+            });
+            updateTotalPrice();
+
+            if (productTable.getElementsByTagName("tr").length === 0) {
+                productImage.style.display = "none";
+            }
+        }
+
+        // вызов функции расчета стоимости при вводе скидки
+        document.getElementById("discount").addEventListener("change", function () {
+            const discount = parseFloat(this.value) || 0;
+            updatePricesWithDiscount(discount);
+            updateTotalPrice();
+        });
+
+        // функция подсчета цены со скидкой
+        function updatePricesWithDiscount(discount) {
+            // обновление цен в левой таблице
+            const productTableRows = document.querySelectorAll("#productTable tbody tr");
+            productTableRows.forEach((row) => {
+                const priceCell = row.cells[4];
+                if (priceCell) {
+                    const originalPrice = parseFloat(row.dataset.originalPrice);
+                    if (!isNaN(originalPrice)) {
+                        //const discountedPrice = originalPrice * (1 - discount / 100);
+                        const discountedPrice = (originalPrice * 100) / (discount + 100);
+                        priceCell.textContent = discountedPrice.toFixed(2);
+                    }
+                }
+            });
+
+            // обновление цен в правой таблице
+            const orderTableRows = document.querySelectorAll("#orderTable tbody tr");
+            orderTableRows.forEach((row) => {
+                const priceCell = row.cells[4]; // Проверьте правильность индекса колонки
+                if (priceCell) {
+                    const originalPrice = parseFloat(priceCell.dataset.originalPrice);
+                    if (!isNaN(originalPrice)) {
+                        const discountedPrice = (originalPrice * 100) / (discount + 100);
+                        priceCell.textContent = discountedPrice.toFixed(2);
+
+                        // Общее обновление суммы
+                        const quantityInput = row.querySelector(".quantity-input");
+                        if (quantityInput) {
+                            const quantity = parseInt(quantityInput.value) || 0;
+                            row.cells[6].textContent = (quantity * discountedPrice).toFixed(2);
+                        }
+                    }
+                }
+            });
+        }
+
+        // КНОПКА ОТКРЫТЬ ЗАКАЗ "НАДО БУДЕТ УБРАТЬ СТРОЧКУ "tooltipContainer.style.display='none';""
+        function insertAfter(newNode, referenceNode) {
+            referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+        }
+
+        function setupLoadOrderButton() {
+            const loadOrderButton = document.createElement("button");
+            loadOrderButton.className = "input-button";
+
+            const img = document.createElement("img");
+            img.src = "img/open.png"; // Указываем путь к изображению
+            img.className = "color";
+            img.alt = "Открыть"; // Альтернативный текст для изображения
+
+            loadOrderButton.appendChild(img);
+
+            loadOrderButton.addEventListener("click", () =>
+                document.getElementById("orderFileInput").click()
+            );
+
+            const tooltipContainer = document.createElement("div");
+            tooltipContainer.className = "tooltip-container";
+
+            // Создаем элемент подсказки
+            const tooltipText = document.createElement("span");
+            tooltipText.className = "tooltip-text";
+            tooltipContainer.style.display = "none"; // ПОТОМ УБРАТЬ
+            tooltipText.textContent =
+                "Открывает файл заявки, сохраненный ранее\nс помощью кнопки «Сохранить файл»";
+
+            // Вставляем кнопку и подсказку внутрь контейнера
+            tooltipContainer.appendChild(loadOrderButton);
+            tooltipContainer.appendChild(tooltipText);
+
+            // Находим нужное место для вставки контейнера
+            const priceAndOrderDiv = document.querySelector(".price-and-order");
+            const saveOrderButtonContainer =
+                priceAndOrderDiv.querySelector(".tooltip-container");
+
+            // Вставляем контейнер с новой кнопкой после контейнера с существующей кнопкой
+            insertAfter(tooltipContainer, saveOrderButtonContainer);
+
+            // Подождем, пока изображение не загрузится, прежде чем инициализировать подсказку
+            img.onload = () => {
+                initializeTooltip(tooltipContainer);
+            };
+        }
+
+        // функция для отображения формы заказа
+        function showOrderForm() {
+            const orderFormContainer = document.getElementById("orderFormContainer");
+            const orderList = document.getElementById("orderList");
+            const orderTableRows = document.querySelectorAll("#orderTable tbody tr");
+
+            orderList.value = Array.from(orderTableRows)
+                .map((row, index) => {
+                    const cells = row.getElementsByTagName("td");
+                    const quantity = cells[5].querySelector("input").value;
+                    return `${index + 1}. Код: ${cells[1].innerText} Наименование: ${cells[3].innerText
+                        } Кол-во: ${quantity} шт. Цена: ${cells[6].innerText}`;
+                })
+                .join("\n");
+
+            orderFormContainer.style.display = "block";
+            document.getElementById("overlay").style.display = "block";
+        }
+
+        function closeOrderForm() {
+            const orderFormContainer = document.getElementById("orderFormContainer");
+            orderFormContainer.style.display = "none";
+            document.getElementById("overlay").style.display = "none";
+        }
+
+        function isValidPhoneNumber(phone) {
+            const phoneRegex = /^(\+7|8)?[0-9]{10}$|^2[0-9]{6}$/;
+            return phoneRegex.test(phone);
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        function validateInputs() {
+            const name = document.getElementById("customerName").value.trim();
+            const phone = document.getElementById("customerPhone").value.trim();
+            const email = document.getElementById("customerEmail").value.trim();
+
+            let isValid = true;
+
+            if (name === "") {
+                document.getElementById("customerName").style.borderColor = "red";
+                document.getElementById("nameError").textContent =
+                    "Введите название компании";
+                isValid = false;
+            } else {
+                document.getElementById("customerName").style.borderColor = "";
+                document.getElementById("nameError").textContent = "";
+            }
+
+            if (!isValidPhoneNumber(phone)) {
+                document.getElementById("customerPhone").style.borderColor = "red";
+                document.getElementById("phoneError").textContent =
+                    "Введите номер телефона по шаблону: 8/7/+7********** или 2 ****** ";
+                isValid = false;
+            } else {
+                document.getElementById("customerPhone").style.borderColor = "";
+                document.getElementById("phoneError").textContent = "";
+            }
+
+            if (!isValidEmail(email)) {
+                document.getElementById("customerEmail").style.borderColor = "red";
+                document.getElementById("emailError").textContent =
+                    "Введите адрес электронной почты";
+                isValid = false;
+            } else {
+                document.getElementById("customerEmail").style.borderColor = "";
+                document.getElementById("emailError").textContent = "";
+            }
+
+            validationFlagInputs = false;
+            return isValid;
+        }
+
+        document
+            .getElementById("customerName")
+            .addEventListener("blur", validateInputs);
+        document
+            .getElementById("customerPhone")
+            .addEventListener("blur", validateInputs);
+        document
+            .getElementById("customerEmail")
+            .addEventListener("blur", validateInputs);
+
+        //
+        function placeOrder() {
+            if (!validateInputs() || !validateOrder()) {
+                alert(
+                    "Пожалуйста, исправьте ошибки в полях ввода и выберите хотя бы один товар."
+                );
+                return;
+            }
+
+            document.getElementById("orderFormContainer").style.display = "block";
+            document.getElementById("overlay").style.display = "block";
+
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString("ru-RU").replace(/\//g, ".");
+
+            const totalPriceElement = document.getElementById("totalPriceWithDiscount");
+            const totalPrice = totalPriceElement
+                ? totalPriceElement.textContent.split(": ")[1].split(" ")[0]
+                : "0.00";
+        }
+
+        function confirmCloseOrderForm() {
+            const confirmClose = confirm(
+                "Вы действительно хотите отказаться от оформления заявки?"
+            );
+            if (confirmClose) {
+                hideOrderForm();
+            }
+        }
+
+        function hideOrderForm() {
+            document.getElementById("orderFormContainer").style.display = "none";
+            document.getElementById("overlay").style.display = "none";
+        }
+
+        // проверка выбора хоть одного товара
+        function validateOrder() {
+            const orderTableRows = document.querySelectorAll("#orderTable tbody tr");
+            if (orderTableRows.length === 0) {
+                //alert("Вы должны выбрать хотя бы один товар.");
+                validationFlagOrder = true;
+                return false;
+            }
+            validationFlagOrder = false;
+            return true;
+        }
+
+        let workbook;
+
+        let validationFlagOrder = false;
+        let validationFlagInputs = false;
+
+        const excelFilePath = "./documents/заявка.xlsx";
+        document.addEventListener("DOMContentLoaded", (event) => {
+            setupLoadOrderButton();
+
+            window.addEventListener("DOMContentLoaded", function () {
+                const req = new XMLHttpRequest();
+                req.open("GET", excelFilePath, true);
+                req.responseType = "arraybuffer";
+
+                req.onload = function (e) {
+                    const data = new Uint8Array(req.response);
+                    workbook = XLSX.read(data, { type: "array" });
+                };
+
+                req.send();
+            });
+        });
+
+        // функция экспорта в excel файл с дальнейшей отправкой его на почту (клиента/менеджера)
+        function submitOrder() {
+            if (!workbook) {
+                alert("Файл шаблона не найден.");
+                return;
+            }
+
+            if (!validateInputs() || !validateOrder()) {
+                alert(
+                    "Пожалуйста, исправьте ошибки в полях ввода и выберите хотя бы один товар для заказа."
+                );
+                return;
+            }
+
+            const customerEmailInput = document.getElementById("customerEmail");
+            if (!customerEmailInput) {
+                //alert('Элемент ввода email не найден');
+                return;
+            }
+
+            const customerEmail = customerEmailInput.value;
+            if (!customerEmail) {
+                alert("Введите Email");
+                return;
+            }
+
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, "0");
+            const month = String(today.getMonth() + 1).padStart(2, "0");
+            const year = today.getFullYear();
+            const formattedDate = `${day}.${month}.${year}`;
+
+            const ws = workbook.Sheets[workbook.SheetNames[0]];
+
+            XLSX.utils.sheet_add_aoa(
+                ws,
+                [["Заявка на продажу товара от " + formattedDate]],
+                { origin: "A1" }
+            );
+
+            const managerSelect = document.getElementById("managerSelect");
+            const employeeEmail = managerSelect.value;
+
+            const employeeName =
+                managerSelect.options[managerSelect.selectedIndex].textContent;
+
+            //const managerEmail = document.getElementById('managerSelect').value;
+            const managerEmail = managerSelect.value;
+            XLSX.utils.sheet_add_aoa(ws, [[managerEmail]], { origin: "C6" });
+
+            const anyManagerEmail = document.getElementById(
+                "hiddenAnyManagerEmail"
+            ).value;
+
+            const customerName = document.getElementById("customerName").value;
+            XLSX.utils.sheet_add_aoa(ws, [[customerName]], { origin: "C8" });
+
+            const customerPhone = document.getElementById("customerPhone").value;
+            XLSX.utils.sheet_add_aoa(ws, [[customerPhone]], { origin: "C9" });
+
+            XLSX.utils.sheet_add_aoa(ws, [[customerEmail]], { origin: "C10" });
+
+            let totalPriceWithoutDiscountElement = document.getElementById(
+                "TotalPriceWhithoutDiscount"
+            );
+            let totalPriceDiscount = totalPriceWithoutDiscountElement.textContent;
+            totalPriceDiscount = totalPriceDiscount.replace(".", ",");
+            XLSX.utils.sheet_add_aoa(ws, [[totalPriceDiscount]], { origin: "C12" });
+
+            let totalPrice = document.getElementById("totalPrice").textContent;
+            totalPrice = totalPrice.replace(".", ",");
+            XLSX.utils.sheet_add_aoa(ws, [[totalPrice]], { origin: "C14" });
+
+            const discount = document.getElementById("discount").value;
+            XLSX.utils.sheet_add_aoa(ws, [[discount]], { origin: "C13" });
+
+            /*
+              let totalPriceDiscount = document.getElementById('TotalPriceWhithoutDiscount').textContent;
+              totalPriceDiscount = totalPriceDiscount.replace('.', ',');
+              XLSX.utils.sheet_add_aoa(ws, [[totalPriceDiscount]], {origin: 'C14' });
+                            */
+
+            const orderTableRows = document.querySelectorAll("#orderTable tbody tr");
+            const tableData = [
+                ["№", "Код", "Товар", "Цена за ед.", "", "", "Кол-во", "Сумма"],
+            ];
+
+            orderTableRows.forEach((row, index) => {
+                const cells = row.getElementsByTagName("td");
+                const code = cells[1].innerText;
+                const name = cells[3].innerText;
+                const price = cells[4].innerText.replace(".", ",");
+                const quantity = cells[5].querySelector("input").value;
+                const sum = cells[6].innerText.replace(".", ",");
+
+                tableData.push([index + 1, code, name, price, "", "", quantity, sum]);
+            });
+            XLSX.utils.sheet_add_aoa(ws, tableData, { origin: "A16" });
+
+            const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "base64" });
+
+            const comments = document.getElementById("AnyComments").value;
+
+            const loadingIndicator = document.getElementById("loading-spinner");
+            loadingIndicator.style.display = "flex";
+
+            fetch("http://31.128.36.243:3003/send-email2", {
+                //fetch('http://192.168.0.135:3000/send-email', {
+                //fetch('http://192.168.20.164:3003/send-email2', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    file: wbout,
+                    customerEmail: customerEmail,
+                    comments: comments,
+                    employeeEmail: employeeEmail,
+                    anyManagerEmail: anyManagerEmail,
+                    employeeName: employeeName,
+                    customerName: customerName,
+                    customerPhone: customerPhone,
+                    totalPrice: totalPrice,
+                }),
+            })
+                .then((response) => {
+                    if (response.ok) {
+                        loadingIndicator.style.display = "none";
+                        alert(
+                            "Заказ отправлен! Информацию о заказе вы можете увидеть на почте."
+                        );
+                        hideOrderForm();
+
+                        const clearOrderCheckbox = document.getElementById("clearOrderCheckbox");
+                        if (clearOrderCheckbox.checked) {
+                            // Если чекбокс установлен, очищаем таблицы
+                            clearTables();
+                        }
+                    } else {
+                        loadingIndicator.style.display = "none";
+                        alert("Ошибка при отправке заказа. Попробуйте снова.");
+                    }
+                })
+                .catch((error) => {
+                    loadingIndicator.style.display = "none";
+                    console.error("Ошибка:", error);
+                    alert("Ошибка при отправке заказа. Попробуйте снова.");
+                });
+        }
+
+        function clearTables() {
+            const orderTableBody = document
+                .getElementById("orderTable")
+                .getElementsByTagName("tbody")[0];
+            orderTableBody.innerHTML = "";
+
+            const productTableBody = document.querySelector("#productTable tbody");
+            const productRows = productTableBody.getElementsByTagName("tr");
+
+            Array.from(productRows).forEach((row) => {
+                const kod = row.cells[0].textContent;
+                updateLeftTableQuantity(kod, 0);
+                delete currentItems[kod];
+            });
+
+            updateTotalPrice();
+            updateOrderButtonState();
+            saveOrderTemp();
+        }
+
+        /*
+        //функция экспорта в файл excel
+        function exportToExcel() {
+            if (!workbook) {
+                                alert("Файл шаблона не найден.");
+                            return;
+            }
+
+                            const today = new Date();
+                            const day = String(today.getDate()).padStart(2, '0');
+                            const month = String(today.getMonth() + 1).padStart(2, '0');
+                            const year = today.getFullYear();
+                            const formattedDate = `${day}.${month}.${year}`;
+
+                            const ws = workbook.Sheets[workbook.SheetNames[0]];
+
+                            XLSX.utils.sheet_add_aoa(ws, [['Заявка на продажу товара от ' + formattedDate]], {origin: 'A1' });
+
+                            const managerEmail = document.getElementById('managerSelect').value;
+                            XLSX.utils.sheet_add_aoa(ws, [[managerEmail]], {origin: 'C6' });
+
+                            const customerName = document.getElementById('customerName').value;
+                            XLSX.utils.sheet_add_aoa(ws, [[customerName]], {origin: 'C8' });
+
+                            const customerPhone = document.getElementById('customerPhone').value;
+                            XLSX.utils.sheet_add_aoa(ws, [[customerPhone]], {origin: 'C9' });
+
+                            const customerEmail = document.getElementById('customerEmail').value;
+                            XLSX.utils.sheet_add_aoa(ws, [[customerEmail]], {origin: 'C10' });
+
+                            let totalPrice = document.getElementById('totalPrice').textContent;
+                            totalPrice = totalPrice.replace('.', ',');
+                            XLSX.utils.sheet_add_aoa(ws, [[totalPrice]], {origin: 'C12' });
+
+                            const discount = document.getElementById('discount').value;
+                            XLSX.utils.sheet_add_aoa(ws, [[discount]], {origin: 'C13' });
+
+                            let totalPriceDiscount = document.getElementById('totalPriceDiscount').textContent;
+                            totalPriceDiscount = totalPriceDiscount.replace('.', ',');
+                            XLSX.utils.sheet_add_aoa(ws, [[totalPriceDiscount]], {origin: 'C14' });
+
+                            const orderTableRows = document.querySelectorAll('#orderTable tbody tr');
+                            const tableData = [['№', 'Код', 'Товар', 'Цена за ед.', '', '', 'Кол-во', 'Сумма']];
+        
+            orderTableRows.forEach((row, index) => {
+                const cells = row.getElementsByTagName('td');
+                            const code = cells[1].innerText;
+                            const name = cells[2].innerText;
+                            const price = cells[3].innerText.replace('.', ',');
+                            const quantity = cells[4].querySelector('input').value;
+                            const sum = cells[5].innerText.replace('.', ',');
+
+                            tableData.push([
+                            index + 1,
+                            code,
+                            name,
+                            price,
+                            '',
+                            '',
+                            quantity,
+                            sum
+                            ]);
+            });
+                            XLSX.utils.sheet_add_aoa(ws, tableData, {origin: 'A16' });
+
+                            XLSX.writeFile(workbook, `zayavka_${formattedDate}.xlsx`);
+        }
+                            */
+
+        document.addEventListener("DOMContentLoaded", function () {
+            loadCategories(); // Вызываем один раз при загрузке страницы
+
+            // Получаем ссылку на чекбокс
+            const fixProfitablyCheckbox = document.getElementById("fix-profitably-checkbox");
+
+            // Проверяем, существует ли элемент чекбокса
+            if (fixProfitablyCheckbox) {
+                //console.log("Чекбокс найден");
+
+                // Добавляем обработчик для события изменения состояния чекбокса
+                fixProfitablyCheckbox.addEventListener("change", function () {
+                    //console.log("Состояние чекбокса изменилось");
+                    loadCategories(); // Вызываем loadCategories только при изменении состояния чекбокса
+                });
+            } else {
+                //console.log("Чекбокс не найден");
+            }
+        });
+
+        let categoryMap = {};
+        function loadCategories() {
+            const fixProfitablyCheckbox = document.getElementById(
+                "fix-profitably-checkbox"
+            );
+            const profitably = fixProfitablyCheckbox ? fixProfitablyCheckbox.checked ? 1 : 0 : 0;
+
+            fetch(`bd/categories2.php?&profitably=${profitably}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    const dropdown = document.getElementById("dropdown");
+                    dropdown.innerHTML = ""; // отчиска выпадающего списка категорий перед заполнением
+
+                    // Добавляем кнопку для сброса категорий
+                    const resetDiv = document.createElement("div");
+                    resetDiv.textContent = "Все категории";
+                    if (profitably === 1) {
+                        resetDiv.setAttribute("onclick", "selectCategory()");
+                    } else {
+                        resetDiv.setAttribute("onclick", "resetCategories()");
+                    }
+                    resetDiv.classList.add("dropdown-item"); // добавление класса для resetDiv
+                    dropdown.appendChild(resetDiv);
+
+                    const categoryMap = {};
+
+                    data.forEach((category) => {
+                        if (category.SubCategoryArticle === "$") {
+                            // главная категория
+                            if (!categoryMap[category.CategoryArticle]) {
+                                categoryMap[category.CategoryArticle] = {
+                                    name: category.nameCategory,
+                                    subcategories: [],
+                                };
+                            }
+                        } else {
+                            // подкатегория
+                            if (!categoryMap[category.SubCategoryArticle]) {
+                                categoryMap[category.SubCategoryArticle] = {
+                                    subcategories: [],
+                                };
+                            }
+                            // добавление подкатегории в подкатегорию главной категории
+                            categoryMap[category.SubCategoryArticle].subcategories.push({
+                                ...category,
+                                mainCategoryArticle: category.SubCategoryArticle,
+                            });
+                        }
+                    });
+
+                    Object.keys(categoryMap).forEach((key) => {
+                        const category = categoryMap[key];
+                        if (category.name) {
+                            const mainDiv = document.createElement("div");
+                            mainDiv.textContent = `- ${category.name}`;
+                            mainDiv.setAttribute(
+                                "onclick",
+                                `selectCategory('${key}', '${category.name}')`
+                            );
+                            mainDiv.classList.add("dropdown-item"); // добавление класса для mainDiv
+                            mainDiv.classList.add("dropdown-item", "main-category");
+                            dropdown.appendChild(mainDiv);
+                        }
+
+                        category.subcategories.forEach((subcategory) => {
+                            const subDiv = document.createElement("div");
+                            subDiv.textContent = `= ${subcategory.nameCategory}`;
+                            subDiv.classList.add("dropdown-item", "subcategory"); // добавление класса для subDiv
+                            subDiv.setAttribute(
+                                "onclick",
+                                `selectSubcategory(event, '${category.name}', '${subcategory.nameCategory}','${subcategory.CategoryArticle}', '${subcategory.mainCategoryArticle}')`
+                            );
+                            dropdown.appendChild(subDiv);
+                        });
+                    });
+                })
+                .catch((error) => console.error("Error loading categories:", error));
+            //console.log("Категории загрузились");
+        }
+
+        // функция сброса категорий
+        function resetCategories() {
+            const inputField = document.getElementById("category-input");
+            inputField.value = "../";
+            delete inputField.dataset.categoryArticle;
+            delete inputField.dataset.mainCategoryArticle;
+            document.getElementById("dropdown").style.display = "none";
+
+            //дополнительная загрузка даных для всех категорий
+            loadData();
+        }
+
+        /*
+        function toggleDropdown() {
+            const dropdown = document.getElementById("dropdown");
+            const inputField = document.getElementById("category-input");
+
+            if (dropdown.style.display === "none" || dropdown.style.display === "") {
+                dropdown.style.width = inputField.offsetWidth * 0.92 + "px";
+                dropdown.style.display = "block";
+                setTimeout(() => {
+                    dropdown.classList.add("show");
+                }, 10);
+                document.addEventListener("click", closeDropdownOnClickOutside);
+            } else {
+                dropdown.classList.remove("show");
+                dropdown.addEventListener("transitionend", function hideDropdown() {
+                    dropdown.style.display = "none";
+                    dropdown.removeEventListener("transitionend", hideDropdown);
+                });
+                document.removeEventListener("click", closeDropdownOnClickOutside);
+            }
+        }*/
+        // Функция для корректного изменения ширины dropdown
+        function adjustDropdownWidth() {
+            const dropdown = document.getElementById("dropdown");
+            const inputField = document.getElementById("category-input");
+
+            // Получаем точные размеры элемента category-input с использованием getBoundingClientRect()
+            const inputFieldRect = inputField.getBoundingClientRect();
+
+            // Устанавливаем ширину dropdown, равную ширине inputField
+            dropdown.style.width = inputFieldRect.width * 0.9875 + "px";
+        }
+
+        // Функция для открытия/закрытия dropdown
+        function toggleDropdown() {
+            const dropdown = document.getElementById("dropdown");
+            const inputField = document.getElementById("category-input");
+
+            // Получаем точную ширину поля ввода
+            const inputFieldRect = inputField.getBoundingClientRect();
+
+            // Если dropdown скрыт, то показываем его
+            if (dropdown.style.display === "none" || dropdown.style.display === "") {
+                // Устанавливаем ширину dropdown как точную ширину inputField
+                dropdown.style.width = inputFieldRect.width * 0.9875 + "px"; // Точная ширина без лишних вычислений
+                dropdown.style.display = "block";
+
+                setTimeout(() => {
+                    dropdown.classList.add("show");
+                }, 10);
+
+                // Добавляем обработчик на клик вне dropdown
+                document.addEventListener("click", closeDropdownOnClickOutside);
+            } else {
+                // Закрываем dropdown
+                dropdown.classList.remove("show");
+                dropdown.addEventListener("transitionend", function hideDropdown() {
+                    dropdown.style.display = "none";
+                    dropdown.removeEventListener("transitionend", hideDropdown);
+                });
+                document.removeEventListener("click", closeDropdownOnClickOutside);
+            }
+        }
+
+        // Добавляем слушатель на изменение размера окна
+        window.addEventListener("resize", adjustDropdownWidth);
+
+        // функция закрытия списка категории, если нажимать мимо блока (СТАРАЯ)
+        /*
+        function closeDropdownOnClickOutside(event) {
+            const dropdown = document.getElementById("dropdown");
+            const inputField = document.getElementById("category-input");
+            if (!dropdown.contains(event.target) && !inputField.contains(event.target)) {
+                dropdown.classList.remove("show");
+                dropdown.addEventListener("transitionend", function hideDropdown() {
+                    dropdown.style.display = "none";
+                    dropdown.removeEventListener("transitionend", hideDropdown);
+                });
+                document.removeEventListener("click", closeDropdownOnClickOutside);
+            }
+        } */
+        function closeDropdownOnClickOutside(event) {
+            const dropdown = document.getElementById("dropdown");
+            const inputField = document.getElementById("category-input");
+
+            // Проверяем, открыт ли dropdown (не имеет display: none)
+            const isDropdownVisible = dropdown.style.display !== "none" && dropdown.classList.contains("show");
+
+            if (!dropdown.contains(event.target) && !inputField.contains(event.target)) {
+                if (isDropdownVisible) {
+                    dropdown.classList.remove("show");
+                    dropdown.addEventListener("transitionend", function hideDropdown() {
+                        dropdown.style.display = "none";
+                        dropdown.removeEventListener("transitionend", hideDropdown);
+                    });
+                }
+                document.removeEventListener("click", closeDropdownOnClickOutside);
+            }
+        }
+
+        // функция выбора главной категории
+        function selectCategory(categoryArticle, categoryName) {
+            const searchInput = document.getElementById("searchInput");
+            const inputField = document.getElementById("category-input");
+            const fixCategoryCheckbox = document.getElementById("fix-category-checkbox");
+
+            //inputField.value = `../${categoryName}`;
+            //inputField.dataset.categoryArticle = categoryArticle;
+
+            const profitablyCheckbox = document.getElementById("fix-profitably-checkbox");
+            const profitably = profitablyCheckbox && profitablyCheckbox.checked ? 1 : 0;
+
+            if (profitably === 1) {
+                // Если profitably = 1, сбрасываем категорию
+                if (categoryName == undefined) {
+                    inputField.value = `../Все категории`;
+                } else {
+                    inputField.value = `../${categoryName}`; // Отображаем "Все категории"
+                    inputField.dataset.categoryArticle = ""; // Сбрасываем data-атрибут
+                }
+            } else if (categoryArticle) {
+                // Если выбрана конкретная категория
+                inputField.value = `../${categoryName}`; // Обновляем отображение
+                inputField.dataset.categoryArticle = categoryArticle; // Сохраняем категорию в data-атрибут
+            } else {
+                // Если выбраны "Все категории"
+                inputField.value = "../"; // Отображаем "Все категории"
+                inputField.dataset.categoryArticle = ""; // Сбрасываем категорию
+            }
+
+            document.getElementById("dropdown").style.display = "none";
+
+            // Если галочка не установлена, категория визуально не сбрасывается
+            loadData(categoryArticle);
+
+            // Если галочка не стоит, при поиске отображаем корневую категорию
+            if (!fixCategoryCheckbox.checked) {
+                //categoryInput.value = "../"; // Визуально сбросить на корневую
+                //inputField.value = "../";
+            }
+            searchInput.value = "";
+        }
+
+        // функция для выполнения поиска
+        function performSearch() {
+            const searchInput = document.getElementById("searchInput");
+            const categoryInput = document.getElementById("category-input");
+            const fixCategoryCheckbox = document.getElementById("fix-category-checkbox");
+
+            let categoryArticle = categoryInput.dataset.categoryArticle;
+
+            // Если галочка не установлена, сбросим категорию на корневую при поиске
+            if (!fixCategoryCheckbox.checked) {
+                categoryArticle = ""; // Корневая категория
+            }
+
+            loadData(categoryArticle, searchInput.value);
+
+            // Если галочка не стоит, при поиске отображаем корневую категорию
+            if (!fixCategoryCheckbox.checked) {
+                categoryInput.value = "../"; // Визуально сбросить на корневую
+            }
+        }
+
+        // функция выбора зависимой категории
+        function selectSubcategory(
+            event,
+            mainCategory,
+            subCategory,
+            subCategoryArticle,
+            mainCategoryArticle
+        ) {
+            event.stopPropagation();
+            const searchInput = document.getElementById("searchInput");
+            const inputField = document.getElementById("category-input");
+            inputField.value = `../${mainCategory}/${subCategory}`;
+            inputField.dataset.categoryArticle = subCategoryArticle;
+            inputField.dataset.mainCategoryArticle = mainCategoryArticle;
+            document.getElementById("dropdown").style.display = "none";
+
+            searchInput.value = "";
+            loadData(subCategoryArticle);
+        }
+
+        // функция обработки зависимой категории
+        function isSubcategory(mainCategory, subCategory, categoryData) {
+            for (let category of categoryData) {
+                if (
+                    category.CategoryArticle === subCategory &&
+                    category.SubCategoryArticle === mainCategory
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        //функция отката категории
+        function goBack() {
+            const inputField = document.getElementById("category-input");
+
+            /* ОТЧИСКА ПОИСКА */
+            const searchInput = document.getElementById("searchInput");
+            searchInput.value = "";
+            /* */
+
+            const currentValue = inputField.value;
+            const parts = currentValue.split("/");
+
+            if (parts.length > 2) {
+                parts.pop();
+                inputField.value = parts.join("/");
+            } else {
+                inputField.value = "../";
+                delete inputField.dataset.categoryArticle;
+                delete inputField.dataset.mainCategoryArticle;
+            }
+
+            const newCategoryName = parts.length > 2 ? parts[parts.length - 1] : "";
+            const newCategory = parts.length > 1 ? parts[1] : "";
+
+            fetch("bd/categories.php")
+                .then((response) => response.json())
+                .then((categoryData) => {
+                    let categoryArticle = "";
+                    if (newCategoryName) {
+                        for (let category of categoryData) {
+                            if (category.nameCategory === newCategoryName) {
+                                categoryArticle = category.CategoryArticle;
+                                break;
+                            }
+                        }
+                    } else if (
+                        inputField.value !== "../" &&
+                        inputField.dataset.mainCategoryArticle
+                    ) {
+                        categoryArticle = inputField.dataset.mainCategoryArticle;
+                    }
+                    inputField.dataset.categoryArticle = categoryArticle;
+                    loadData(categoryArticle);
+                })
+                .catch((error) =>
+                    console.error("Ошибка загрузки данных категорий:", error)
+                );
+        }
+
+        // Функция для отображения FAQ
+        function showFAQ() {
+            document.getElementById("faqPopupContainer").style.display = "block";
+            document.getElementById("overlay").style.display = "block";
+        }
+
+        // Функция для закрытия FAQ
+        function closeFAQ() {
+            document.getElementById("faqPopupContainer").style.display = "none";
+            document.getElementById("overlay").style.display = "none";
+        }
+
+        //функция для открытия (расширения) правой таблицы/закрытие таблицы
+        function toggleHeaders() {
+            const nameHeader = document.getElementById("name-header");
+            const priceHeader = document.getElementById("price-header");
+            const selectedItemsSection = document.querySelector(
+                ".selected-items-section"
+            );
+            const mainSection = document.querySelector(".main-section");
+            const expandButton = document.getElementById("expandButton");
+            const searchPanel = document.getElementById("search-panel");
+            const secondChose = document.getElementById("buttonContainerRight");
+            const orderButton = document.getElementById("order-button");
+
+            const headers = [nameHeader, priceHeader];
+
+            const isMobile = window.innerWidth <= 1375;
+            if (selectedItemsSection.classList.contains("large")) {
+                selectedItemsSection.classList.remove("large"); // добавление класса moved для обратной анимации
+                selectedItemsSection.classList.add("moved");
+                selectedItemsSection.addEventListener(
+                    "transitionend",
+                    function handleTransitionEnd() {
+                        selectedItemsSection.classList.remove("moved");
+                        selectedItemsSection.removeEventListener(
+                            "transitionend",
+                            handleTransitionEnd
+                        );
+                    }
+                );
+                priceHeader.classList.remove("full");
+                nameHeader.classList.remove("full");
+                headers.forEach((header) => {
+                    hideColumn(header.cellIndex);
+                });
+
+                mainSection.style.marginLeft = "0";
+                if (!isMobile) {
+                    setTimeout(() => {
+                        mainSection.style.transform = "translateX(0)";
+                        mainSection.style.opacity = "1";
+                        mainSection.classList.remove("hidden");
+                        orderButton.style.display = "none";
+                    }, 30);
+                } else {
+                    mainSection.classList.remove("hidden");
+                    mainSection.style.opacity = "1";
+                    priceHeader.style.display = "none";
+                    priceHeader.style.opacity = "0";
+                    nameHeader.style.display = "none";
+                    nameHeader.style.opacity = "0";
+                }
+                secondChose.style.display = "none";
+
+                expandButton.querySelector("span").classList.remove("rotated");
+                searchPanel.classList.remove("visible"); // скрыть панель поиска
+            } else {
+                dropdown.style.display = "none";
+                selectedItemsSection.classList.add("large");
+
+                if (isMobile) {
+                    mainSection.classList.add("hidden");
+                    priceHeader.style.display = "table-cell";
+                    priceHeader.style.opacity = "1";
+                    nameHeader.style.display = "table-cell";
+                    nameHeader.style.opacity = "1";
+                    orderButton.style.display = "block";
+                } else {
+                    mainSection.style.opacity = "";
+                    orderButton.style.display = "block";
+                }
+                secondChose.style.display = "block";
+
+                selectedItemsSection.classList.add("moved");
+
+                selectedItemsSection.addEventListener(
+                    "transitionend",
+                    function handleTransitionEnd() {
+                        selectedItemsSection.classList.remove("moved");
+                        selectedItemsSection.style.transform = "translateX(0)";
+                        setTimeout(
+                            () => {
+                                priceHeader.classList.add("full");
+                                nameHeader.classList.add("full");
+                            },
+                            isMobile ? 10 : 20
+                        ); // Задержка зависит от типа устройства (была 100 : 500)
+                    }
+                );
+
+                headers.forEach((header) => {
+                    showColumn(header.cellIndex);
+                });
+
+                setTimeout(
+                    () => {
+                        headers.forEach((header) => {
+                            showColumn(header.cellIndex);
+                        });
+                    },
+                    isMobile ? 10 : 20
+                ); // такая же задержка, как выше
+
+                expandButton.querySelector("span").classList.add("rotated");
+                searchPanel.classList.add("visible"); // показать панель поиска
+            }
+        }
+
+        //функция скрытия столбцов
+        function hideColumn(colIndex) {
+            const table = document.getElementById("orderTable");
+            for (let row of table.rows) {
+                row.cells[colIndex].style.display = "none";
+            }
+        }
+
+        //функция раскрытия стоблцов
+        function showColumn(colIndex) {
+            const table = document.getElementById("orderTable");
+            for (let row of table.rows) {
+                row.cells[colIndex].style.display = "";
+            }
+        }
+
+        //Функцияч открытия/закрытия панели выбора типа поиска
+        function toggleButtonContainer() {
+            const buttonContainer = document.getElementById("buttonContainer");
+            const buttonContainer2 = document.getElementById("buttonContainerSecond");
+            const settingButton = document.getElementById("setting");
+            const productTable = document.getElementById("productTableContainer");
+            if (buttonContainer.style.maxHeight) {
+                buttonContainer.style.maxHeight = null;
+                buttonContainer2.style.maxHeight = null;
+                settingButton.classList.remove("active");
+                /* productTable.style.height = 'calc(100vh - 300px)'; */
+                productTable.style.height = "calc(100vh - 240px)";
+            } else {
+                buttonContainer.style.maxHeight = buttonContainer.scrollHeight + "px";
+                buttonContainer2.style.maxHeight = buttonContainer.scrollHeight + "px";
+                settingButton.classList.add("active");
+                //productTable.style.height = '66vh';
+                /* productTable.style.height = 'calc(100vh - 340px)'; */
+                productTable.style.height = "calc(100vh - 280px)";
+            }
+        }
+    </script>
+    <script src="script/load.js?v=1.0"></script>
+    <script src="script/keymove.js?v=1.0"></script>
+    <script src="script/pdfgen.js?v=1.0"></script>
+    <script src="script/pdfgen2.js?v=1.0"></script>
+    <script src="script/cookie.js?v=1.0"></script>
+    <script src="script/img.js?v=1.1"></script>
+    <script src="script/img-mover.js?v=1.0"></script>
+    <script src="script/load-manager.js?v=1.0"></script>
+    <script>
+        document.querySelectorAll('.quantity-input').forEach(input => {
+            input.addEventListener('blur', (event) => {
+                let value = event.target.value;
+
+                let newValue = value.replace(/^0+(?=\d)/, '');
+
+                event.target.value = newValue;
+            });
+        });
+    </script>
+    <script>
+        document.getElementById('saveOrderLocal').addEventListener('click', async function () {
+            const table = document.getElementById('orderTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            const currentDate = new Date();
+            const formattedDate = currentDate.toLocaleDateString('ru-RU').replace(/\./g, '.');
+            const fileName = `hozkom_${formattedDate}.json`;
+
+            const jsonData = [];
+
+            for (let row of rows) {
+                const cells = row.getElementsByTagName('td');
+                if (cells.length > 0) {
+                    const code = cells[1].textContent.trim();
+                    const name = cells[3].textContent.trim();
+
+                    const quantityInput = cells[5].querySelector('input.quantity-input');
+                    const quantity = quantityInput ? parseInt(quantityInput.value.trim()) || 0 : 0;
+
+                    const item = {
+                        код: code,
+                        наименование: name,
+                        количество: quantity
+                    };
+                    jsonData.push(item);
+                }
+            }
+
+            const jsonString = JSON.stringify(jsonData, null, 4);
+
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: fileName,
+                    types: [
+                        {
+                            description: "JSON Files",
+                            accept: { "application/json": [".json"] }
+                        }
+                    ]
+                });
+
+                const writable = await handle.createWritable();
+                await writable.write(jsonString);
+                await writable.close();
+                //alert('Файл успешно сохранен!');
+            } catch (error) {
+                alert('Произошла ошибка при сохранении файла');
+            }
+        });
+
+        function restoreOrderTableFromFile() {
+            /*
+            const orderTableBody = document
+                .getElementById("orderTable")
+                .getElementsByTagName("tbody")[0];
+            orderTableBody.innerHTML = "";
+
+            Array.from(productRows).forEach((row) => {
+                const kod = row.cells[0].textContent;
+                updateLeftTableQuantity(kod, 0);
+                delete currentItems[kod];
+            });
+
+            currentItems = {};
+            */
+
+            const savedOrder = JSON.parse(localStorage.getItem("orderData") || "[]");
+            const orderTable = document.querySelector("#orderTable tbody");
+            const rows = [];
+            let itemsProcessed = 0;
+
+            const delayPerItem = 150;
+            const totalDelay = savedOrder.length * delayPerItem;
+
+            const unavailableProducts = [];
+
+            savedOrder.forEach((item) => {
+                fetch(`bd/restore_products.php?code=${item.code}`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (!data || data.error) {
+                            unavailableProducts.push({
+                                code: item.код,
+                                name: item.наименование,
+                                quantity: item.количество
+                            });
+                            return;
+                        }
+
+                        const row = document.createElement("tr");
+                        const discountedPrice = parseFloat(data.priceArticle);
+
+                        row.innerHTML = `
+                    <td class="checkbox-cell" style="display: none;"><input class="checkbox" type="checkbox"></td>
+                    <td>${data.codeArticle}</td>
+                    <td class="image-cell" style="text-align: center;">
+                        <a href="#" class="photo-link" style="color: blue; text-decoration: underline;" data-code="${data.codeArticle}">Фото</a>
+                        <img id="img-${data.codeArticle}" src="image/60x60/${data.codeArticle}.jpg" alt="${data.nameArticle}" 
+                            data-code="${data.codeArticle}" style="display: none;" 
+                            onerror="this.onerror=null;this.style.display='none';this.parentElement.querySelector('.photo-link').style.display='inline';">
+                    </td>
+                    <td class="name-cell" style="display: none;">${data.nameArticle}</td>
+                    <td class="price-cell" style="display: none; text-align: right;" data-original-price="${data.priceArticle}">
+                        ${discountedPrice.toFixed(2)}
+                    </td>
+                    <td>
+                        <input type="number" value="${item.quantity}" min="1" class="quantity-input right">
+                        <span class="remove-item" style="cursor: pointer; color: red; margin-left: 5px;">
+                            <div style='z-index:1;' class="tooltip-container">
+                                <img style="width:21.25px;" src="img/icon_delete.png" data-static="true">
+                                <span class="tooltip-text">Удалить</span>
+                            </div>
+                        </span>
+                    </td>
+                    <td style="text-align: right;">${(discountedPrice * item.quantity).toFixed(2)}</td>`;
+
+                        rows.push(row);
+
+                        const quantityInput = row.querySelector(".quantity-input");
+
+                        quantityInput.addEventListener("input", function (event) {
+                            const newQuantity = parseInt(this.value) || 0;
+
+                            if (newQuantity < 1) {
+                                createDialog(
+                                    row,
+                                    item.code,
+                                    () => {
+                                        row.remove();
+                                        updateLeftTableQuantity(item.code, 0);
+                                        updateTotalPrice();
+                                        updateOrderButtonState();
+                                        saveOrderTemp();
+                                        updateRightTableCount();
+                                    },
+                                    () => {
+                                        this.value = 1;
+                                        updateLeftTableQuantity(item.code, 1);
+                                        updateTotalPrice();
+                                        updateRightTableCount();
+                                    }
+                                );
+                            } else {
+                                updateLeftTableQuantity(item.code, newQuantity);
+                                const sumCell = row.cells[6];
+                                sumCell.textContent = (newQuantity * discountedPrice).toFixed(2);
+                                updateTotalPrice();
+                                saveOrderTemp();
+                                updateRightTableCount();
+                            }
+                        });
+
+                        row.addEventListener("mouseover", function () {
+                            if (!quantityInput.matches(":focus")) {
+                                row.classList.add("selected");
+                            }
+                        });
+
+                        row.addEventListener("mouseout", function () {
+                            if (!quantityInput.matches(":focus")) {
+                                row.classList.remove("selected");
+                            }
+                        });
+
+                        quantityInput.addEventListener("focus", function () {
+                            row.classList.add("highlight");
+                            row.classList.remove("selected");
+                        });
+
+                        quantityInput.addEventListener("blur", function () {
+                            row.classList.remove("highlight");
+                        });
+
+                        row.addEventListener("click", function () {
+                            quantityInput.focus();
+                            quantityInput.select();
+                        });
+
+                        const removeItemButton = row.querySelector(".remove-item");
+                        removeItemButton.addEventListener("click", function () {
+                            row.remove();
+                            updateLeftTableQuantity(item.code, 0);
+                            updateTotalPrice();
+                            updateOrderButtonState();
+                            saveOrderTemp();
+                            updateRightTableCount();
+                        });
+
+                        itemsProcessed++;
+                    })
+                    .catch((error) => console.error("Ошибка загрузки данных товара:", error));
+            });
+
+            setTimeout(() => {
+                if (unavailableProducts.length) {
+                    let errorMessage = "Данных товаров нет в наличии:\n";
+                    unavailableProducts.forEach((product) => {
+                        errorMessage += `${product.code} / ${product.name} / ${product.quantity}\n`;
+                    });
+                    alert(errorMessage);
+                }
+
+                rows.forEach((row) => orderTable.appendChild(row));
+
+                updateTotalPrice();
+                updateRightTableCount();
+                updateOrderButtonState();
+            }, totalDelay);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const openButton = document.getElementById("OpenOrderLocal");
+            const fileInput = document.getElementById("fileInput");
+
+            openButton.addEventListener("click", () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener("change", (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+
+                    reader.onload = function (e) {
+                        try {
+                            const orderData = JSON.parse(e.target.result);
+                            localStorage.setItem("orderData", JSON.stringify(orderData));
+                            restoreOrderTableFromFile();
+                        } catch (error) {
+                            console.error("Ошибка чтения файла:", error);
+                            alert("Не удалось загрузить заказ. Проверьте формат файла.");
+                        }
+                    };
+
+                    reader.onerror = function () {
+                        console.error("Ошибка чтения файла.");
+                        alert("Произошла ошибка при чтении файла.");
+                    };
+
+                    reader.readAsText(file);
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

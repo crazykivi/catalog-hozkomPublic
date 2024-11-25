@@ -1,0 +1,45 @@
+RewriteEngine On
+RewriteBase /
+
+# Данные для подключения бд
+SetEnv DB_SERVERNAME "localhost"
+SetEnv DB_USERNAME "root"
+SetEnv DB_PASSWORD ""
+SetEnv DB_NAME "hozkom"
+
+# Данные для подключения к тестовой бд
+SetEnv DB_SERVERNAME "localhost"
+SetEnv DB_USERNAME2 "root"
+SetEnv DB_PASSWORD2 ""
+SetEnv DB_NAME2 "hozkom2"
+
+SetEnvIf Referer "^http://31\.128\.36\.243/" allowed_referer
+
+<FilesMatch "^bd/products3\.php$">
+    Order Deny,Allow
+    Deny from all
+    Allow from env=allowed_referer
+</FilesMatch>
+
+#<FilesMatch "^(?!index\.html$).*\.html$">
+#    RewriteCond %{QUERY_STRING} !^auth=secretpassword$ [NC]
+#    RewriteRule ^ - [F,L]
+#</FilesMatch>
+
+# Перенаправление на HTML-файлы, если они существуют
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^([^/]+)/?$ $1.html [L]
+
+# Устанавливаем собственную страницу ошибки 404
+ErrorDocument 404 /index.html
+
+# Отключаем индексацию директорий
+Options -Indexes
+
+# Запрещаем доступ к папкам
+RewriteRule ^test_build/exceljs-master - [F,L]
+RewriteRule ^test_build/node_modules - [F,L]
+
+# Разрешаем доступ для всех остальных
+Require all granted
+
